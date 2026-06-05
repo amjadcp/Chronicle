@@ -1,6 +1,47 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import {
+  Linkedin,
+  Mail,
+  CloudUpload,
+  CheckCircle2,
+  Info,
+  Lock,
+  LogOut,
+  Calendar as CalIcon,
+  Github,
+  Loader2,
+  Sparkles,
+  Send,
+  MailCheck,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Linkedin, Mail } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  subscribeAuth,
+  sendMagicLink,
+  isSignInLink,
+  signInWithLink,
+  signOutUser,
+  isFirebaseConfigured,
+  SimulatedUser,
+} from "@/lib/firebase";
+import { storage } from "@/lib/chronicle/storage";
+import { Timeline } from "@/lib/chronicle/types";
+import { submitTimeline } from "@/lib/api/contributor.functions";
+import { User } from "firebase/auth";
 
 export const Route = createFileRoute("/contributor")({
   head: () => ({
@@ -21,45 +62,419 @@ export const Route = createFileRoute("/contributor")({
 });
 
 function ContributorPage() {
+  const [user, setUser] = useState<User | SimulatedUser | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [emailInput, setEmailInput] = useState("");
+  const [linkSent, setLinkSent] = useState(false);
+  const [sendingLink, setSendingLink] = useState(false);
+  const [completingSignIn, setCompletingSignIn] = useState(false);
+  const [submittingId, setSubmittingId] = useState<string | null>(null);
+  const [myTimelines, setMyTimelines] = useState<Timeline[]>([]);
+  
+  // PR Success Modal state
+  const [successModalOpen, setSuccessModalOpen] = useState(false);
+  const [submitResult, setSubmitResult] = useState<{
+    timelineName: string;
+    url: string;
+    simulated: boolean;
+    contributor: string;
+    message: string;
+  } | null>(null);
+
+  useEffect(() => {
+    // 1. Subscribe to Firebase auth state
+    const unsubscribe = subscribeAuth((u) => {
+      setUser(u);
+      setLoading(false);
+    });
+
+    // 2. Load my timelines
+    setMyTimelines(storage.list());
+
+    // 3. Check if we landed back from an email sign-in link
+    const currentUrl = window.location.href;
+    if (isSignInLink(currentUrl)) {
+      handleCompleteSignIn(currentUrl);
+    }
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
+  async function handleCompleteSignIn(url: string) {
+    try {
+      setCompletingSignIn(true);
+      setLoading(true);
+      const u = await signInWithLink(url);
+      if (u) {
+        toast.success(`Welcome! Logged in as ${u.email}`);
+        
+        // Clear query parameters in client browser URL bar
+        if (typeof window !== "undefined") {
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+      }
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "Failed to complete email sign-in.");
+    } finally {
+      setCompletingSignIn(false);
+      setLoading(false);
+    }
+  }
+
+  async function handleSendLink(e: React.FormEvent) {
+    e.preventDefault();
+    if (!emailInput || !emailInput.includes("@")) {
+      toast.error("Please enter a valid email address.");
+      return;
+    }
+
+    try {
+      setSendingLink(true);
+      await sendMagicLink(emailInput);
+      setLinkSent(true);
+      toast.success("Magic sign-in link sent! Please check your email inbox.");
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "Failed to send magic link.");
+    } finally {
+      setSendingLink(false);
+    }
+  }
+
+  async function handleSignOut() {
+    try {
+      setLoading(true);
+      await signOutUser();
+      setLinkSent(false);
+      setEmailInput("");
+      toast.success("Signed out successfully");
+    } catch (err: any) {
+      console.error(err);
+      toast.error("Failed to sign out");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleSubmitTimeline(timeline: Timeline) {
+    if (!user) {
+      toast.error("You must be logged in to submit a timeline.");
+      return;
+    }
+
+    try {
+      setSubmittingId(timeline.id);
+      
+      // Get Firebase IdToken (needed for server function auth verification)
+      const idToken = await user.getIdToken();
+
+      // Call the server action to submit
+      const res = await submitTimeline({
+        data: {
+          idToken,
+          timeline,
+        }
+      });
+
+      if (res.success) {
+        setSubmitResult({
+          timelineName: timeline.name,
+          url: res.url,
+          simulated: res.simulated,
+          contributor: res.contributor,
+          message: res.message,
+        });
+        setSuccessModalOpen(true);
+        toast.success(`"${timeline.name}" submitted successfully!`);
+      } else {
+        toast.error("Submission failed. Please try again.");
+      }
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "An error occurred during submission.");
+    } finally {
+      setSubmittingId(null);
+    }
+  }
+
   return (
-    <div className="mx-auto max-w-3xl px-4 py-16">
-      <h1 className="text-3xl font-semibold tracking-tight text-foreground">
-        Contribute Historical Timelines
-      </h1>
-      <p className="mt-4 text-base leading-relaxed text-muted-foreground">
-        Chronicle maintains a growing public collection of community-contributed timelines stored
-        in an open GitHub repository. Contributors help expand coverage across world history,
-        ancient civilizations, scientific discoveries, biographies, and more.
-      </p>
-      <p className="mt-4 text-base leading-relaxed text-muted-foreground">
-        If you are interested in contributing timelines, connect with us through LinkedIn or
-        email to request contributor access. We will review your background and grant access to
-        submit timelines.
-      </p>
-      <div className="mt-8 flex flex-wrap gap-3">
-        <Button asChild>
-          <a href="https://www.linkedin.com/" target="_blank" rel="noreferrer">
-            <Linkedin className="mr-2 h-4 w-4" />
-            Contact via LinkedIn
-          </a>
-        </Button>
-        <Button asChild variant="outline">
-          <a href="mailto:hello@chronicle.app">
-            <Mail className="mr-2 h-4 w-4" />
-            Contact via Email
-          </a>
-        </Button>
+    <div className="mx-auto max-w-4xl px-4 py-12">
+      {/* Portal Header */}
+      <div className="text-center md:text-left">
+        <div className="inline-flex items-center gap-1.5 bg-blue-50 dark:bg-blue-950 px-3 py-1 rounded-full text-xs font-semibold text-blue-600 dark:text-blue-400 mb-3">
+          <Sparkles className="h-3.5 w-3.5" />
+          <span>Contributor Portal</span>
+        </div>
+        <h1 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">
+          Contribute Historical Timelines
+        </h1>
+        <p className="mt-4 text-base leading-relaxed text-muted-foreground max-w-2xl">
+          Chronicle hosts a shared library of historical timelines. 
+          Once your email is approved and registered, you can publish your custom timelines directly to the shared library 
+          for everyone to view and study.
+        </p>
       </div>
 
-      <div className="mt-12 rounded-lg border border-border bg-surface p-6">
-        <h2 className="text-lg font-semibold text-foreground">Contributor workflow</h2>
-        <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-muted-foreground">
-          <li>Build your timeline in Chronicle.</li>
-          <li>Export it as JSON.</li>
-          <li>Send it to us, or open a pull request against the GitHub repository.</li>
-          <li>Once merged, your timeline appears in the Prebuilt Timelines tab.</li>
-        </ol>
+      {/* Auth Panel */}
+      <div className="mt-10">
+        {completingSignIn ? (
+          <Card className="p-8 border-border bg-card shadow-sm flex flex-col items-center text-center max-w-md mx-auto">
+            <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+            <h2 className="text-lg font-bold text-foreground">Completing Sign In</h2>
+            <p className="text-sm text-muted-foreground mt-2">
+              Verifying your secure magic link and establishing contributor session...
+            </p>
+          </Card>
+        ) : loading ? (
+          <div className="flex items-center justify-center p-8 bg-surface rounded-xl border border-border">
+            <Loader2 className="h-6 w-6 animate-spin text-primary mr-2" />
+            <span className="text-sm text-muted-foreground">Checking authentication state...</span>
+          </div>
+        ) : !user ? (
+          /* Login Card */
+          <Card className="p-8 border-border bg-gradient-to-br from-card to-slate-50 dark:to-slate-900 shadow-md">
+            <div className="flex flex-col items-center text-center max-w-md mx-auto">
+              <div className="h-12 w-12 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 mb-4">
+                <Lock className="h-5 w-5" />
+              </div>
+              <h2 className="text-xl font-bold text-foreground">Registered Contributor Sign In</h2>
+              <p className="text-sm text-muted-foreground mt-2 mb-6">
+                Chronicle uses passwordless email sign-in. To start publishing your timelines, please contact us to register your email address first.
+              </p>
+
+              {!isFirebaseConfigured && (
+                <Alert className="mb-6 border-amber-200 bg-amber-50/50 dark:border-amber-900/30 dark:bg-amber-950/20 text-left">
+                  <Info className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                  <AlertTitle className="text-amber-800 dark:text-amber-400 font-semibold">Demo / Simulation Mode Active</AlertTitle>
+                  <AlertDescription className="text-amber-700 dark:text-amber-500 text-xs">
+                    Vite Firebase variables are not set. Entering any email below will trigger a simulated login loop that automatically returns with a mock profile.
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {linkSent ? (
+                <div className="w-full bg-blue-50/50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/30 p-6 rounded-lg text-center">
+                  <MailCheck className="h-10 w-10 text-blue-600 dark:text-blue-400 mx-auto mb-3" />
+                  <h3 className="font-semibold text-foreground">Sign-In Link Sent!</h3>
+                  <p className="text-xs text-muted-foreground mt-1.5 leading-normal">
+                    We sent a magic link email to <strong>{emailInput}</strong>.
+                  </p>
+                  
+                  <div className="mt-4 flex gap-2 text-xs text-amber-700 dark:text-amber-400 bg-amber-50/60 dark:bg-amber-950/20 p-3 rounded-lg border border-amber-200/50 text-left">
+                    <Info className="h-4 w-4 shrink-0 mt-0.5" />
+                    <span><strong>IMPORTANT:</strong> Magic link emails often land directly in your <strong>Spam, Junk, or Promotions</strong> folder. Please check those folders if it doesn't arrive in a few seconds!</span>
+                  </div>
+
+                  <Button variant="outline" size="sm" onClick={() => setLinkSent(false)} className="mt-4 w-full">
+                    Send Link Again
+                  </Button>
+                </div>
+              ) : (
+                <form onSubmit={handleSendLink} className="w-full space-y-4 text-left">
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                      Registered Email Address
+                    </Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      required
+                      placeholder="e.g. you@example.com"
+                      value={emailInput}
+                      onChange={(e) => setEmailInput(e.target.value)}
+                      className="w-full"
+                    />
+                  </div>
+
+                  <div className="flex gap-2 text-xs text-amber-700 dark:text-amber-400 bg-amber-50/30 dark:bg-amber-950/10 p-2.5 rounded border border-amber-100/30">
+                    <Info className="h-4 w-4 shrink-0 mt-0.5" />
+                    <span><strong>Note:</strong> Sign-in links often land in the <strong>Spam or Promotions</strong> folder.</span>
+                  </div>
+
+                  <Button type="submit" disabled={sendingLink} className="w-full py-5">
+                    {sendingLink ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Sending Link...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="mr-2 h-4 w-4" />
+                        Send Magic Link
+                      </>
+                    )}
+                  </Button>
+                </form>
+              )}
+            </div>
+          </Card>
+        ) : (
+          /* Logged In Dashboard */
+          <div className="space-y-6">
+            {/* Contributor Profile Card */}
+            <Card className="p-4 sm:p-6 border-border bg-card/60 backdrop-blur shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-3.5 text-center sm:text-left flex-col sm:flex-row">
+                <div className="h-14 w-14 rounded-full overflow-hidden border-2 border-primary/20 bg-muted shrink-0">
+                  {user.photoURL ? (
+                    <img src={user.photoURL} alt={user.displayName || "Avatar"} className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="h-full w-full flex items-center justify-center font-bold text-lg text-primary bg-primary/10">
+                      {(user.displayName || user.email || "C")[0].toUpperCase()}
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <h3 className="font-bold text-foreground text-lg leading-tight">
+                    {user.displayName || "Whitelisted Contributor"}
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">{user.email}</p>
+                  <div className="inline-flex items-center gap-1 mt-1.5 text-[10px] bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 font-semibold px-2 py-0.5 rounded">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                    Approved Contributor
+                  </div>
+                </div>
+              </div>
+              <Button onClick={handleSignOut} variant="outline" size="sm" className="w-full sm:w-auto">
+                <LogOut className="mr-2 h-4 w-4" />
+                Sign Out
+              </Button>
+            </Card>
+
+            {/* Timelines Submission List */}
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-foreground">Your Local Timelines</h2>
+                <span className="text-xs text-muted-foreground">{myTimelines.length} total</span>
+              </div>
+
+              {myTimelines.length === 0 ? (
+                <Card className="p-10 border-dashed border-border bg-surface/30 text-center">
+                  <h3 className="font-semibold text-foreground">No timelines found</h3>
+                  <p className="text-sm text-muted-foreground mt-1 mb-4">
+                    Create a timeline first in the main listing to submit it here.
+                  </p>
+                  <Button asChild>
+                    <Link to="/timelines">Go to Timelines</Link>
+                  </Button>
+                </Card>
+              ) : (
+                <div className="grid gap-3">
+                  {myTimelines.map((t) => (
+                    <Card key={t.id} className="p-4 border-border flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:shadow-md transition-shadow">
+                      <div className="min-w-0">
+                        <Link to="/timeline/$id" params={{ id: t.id }} className="font-bold text-base hover:underline text-foreground block truncate">
+                          {t.name}
+                        </Link>
+                        {t.description && (
+                          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{t.description}</p>
+                        )}
+                        <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
+                          <span className="inline-flex items-center gap-1">
+                            <CalIcon className="h-3.5 w-3.5" />
+                            {t.events.length} events
+                          </span>
+                          <span>Updated {new Date(t.updatedAt).toLocaleDateString()}</span>
+                        </div>
+                      </div>
+                      
+                      <div className="shrink-0 flex items-center gap-2">
+                        <Button 
+                          onClick={() => handleSubmitTimeline(t)}
+                          disabled={submittingId !== null}
+                          className="w-full sm:w-auto"
+                        >
+                          {submittingId === t.id ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Submitting...
+                            </>
+                          ) : (
+                            <>
+                              <CloudUpload className="mr-2 h-4 w-4" />
+                              Submit Contribution
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* Manual Request Panel */}
+      <div className="mt-12 border-t border-border pt-10">
+        <div className="rounded-xl border border-border bg-muted/30 p-6">
+          <h2 className="text-lg font-bold text-foreground">How to become a contributor</h2>
+          <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+            If you want to contribute timelines to the public library, let's get in touch first. 
+            Send us your email address, and we will register it in our database so you can sign in using your magic link.
+          </p>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Button asChild variant="outline" size="sm">
+              <a href="https://www.linkedin.com/" target="_blank" rel="noreferrer">
+                <Linkedin className="mr-2 h-4 w-4" />
+                Contact via LinkedIn
+              </a>
+            </Button>
+            <Button asChild variant="outline" size="sm">
+              <a href="mailto:hello@chronicle.app">
+                <Mail className="mr-2 h-4 w-4" />
+                Contact via Email
+              </a>
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Success Dialog */}
+      <Dialog open={successModalOpen} onOpenChange={setSuccessModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <div className="mx-auto h-12 w-12 rounded-full bg-emerald-50 dark:bg-emerald-950 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-2">
+              <CheckCircle2 className="h-6 w-6" />
+            </div>
+            <DialogTitle className="text-center text-xl font-bold">Contribution Submitted!</DialogTitle>
+            <DialogDescription className="text-center mt-1">
+              Your timeline "{submitResult?.timelineName}" has been submitted for review.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="my-4 bg-muted/40 p-4 rounded-lg text-sm space-y-2.5">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Contributor:</span>
+              <span className="font-semibold text-foreground">{submitResult?.contributor}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Status:</span>
+              <span className="inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-400">
+                Awaiting Review
+              </span>
+            </div>
+            <div className="text-xs text-muted-foreground leading-normal border-t border-border/60 pt-2.5 mt-2.5">
+              {submitResult?.message}
+            </div>
+          </div>
+
+          <DialogFooter className="flex flex-col sm:flex-row gap-2">
+            <Button asChild className="w-full sm:flex-1">
+              <a href={submitResult?.url || "#"} target="_blank" rel="noreferrer">
+                <Github className="mr-2 h-4 w-4" />
+                {submitResult?.simulated ? "View Mock Submission" : "View Submission on GitHub"}
+              </a>
+            </Button>
+            <Button variant="outline" onClick={() => setSuccessModalOpen(false)} className="w-full sm:w-auto">
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
