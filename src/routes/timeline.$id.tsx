@@ -148,7 +148,11 @@ function TimelineDetail() {
   const toggleSel = (eid: string) => {
     setSelected((s) => {
       const n = new Set(s);
-      n.has(eid) ? n.delete(eid) : n.add(eid);
+      if (n.has(eid)) {
+        n.delete(eid);
+      } else {
+        n.add(eid);
+      }
       return n;
     });
   };
@@ -200,6 +204,7 @@ function TimelineDetail() {
     start: EventDate;
     end: EventDate;
     groupId: string | null;
+    color: string | null;
   }) => {
     const newEvt: TimelineEvent = {
       id: newId(),
@@ -210,6 +215,7 @@ function TimelineDetail() {
       notesMarkdown: "",
       resources: [],
       iconResourceId: null,
+      color: data.color ?? null,
     };
     addEvent(newEvt);
     toast.success("Event added successfully");
@@ -220,6 +226,7 @@ function TimelineDetail() {
     start: EventDate;
     end: EventDate;
     groupId: string | null;
+    color: string | null;
   }) => {
     const newEvt: TimelineEvent = {
       id: newId(),
@@ -230,6 +237,7 @@ function TimelineDetail() {
       notesMarkdown: "",
       resources: [],
       iconResourceId: null,
+      color: data.color ?? null,
     };
     addEvent(newEvt);
   };

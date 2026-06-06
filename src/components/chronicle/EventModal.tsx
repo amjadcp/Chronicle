@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -41,6 +41,193 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
+
+// ==========================================
+// COLOR PALETTE  (Google Calendar style)
+// ==========================================
+
+// 10 hue columns, 7 shades each (dark → light).
+// Rendered as a 7-row × 10-column grid of circles.
+const PALETTE_COLS: string[][] = [
+  // Graphite
+  ["#212121","#424242","#616161","#757575","#9e9e9e","#bdbdbd","#e0e0e0"],
+  // Tomato
+  ["#7f1d1d","#b91c1c","#dc2626","#ef4444","#f87171","#fca5a5","#fee2e2"],
+  // Tangerine
+  ["#7c2d12","#c2410c","#ea580c","#f97316","#fb923c","#fdba74","#ffedd5"],
+  // Banana
+  ["#713f12","#a16207","#ca8a04","#eab308","#facc15","#fde047","#fef9c3"],
+  // Sage
+  ["#14532d","#15803d","#16a34a","#22c55e","#4ade80","#86efac","#dcfce7"],
+  // Basil
+  ["#064e3b","#065f46","#047857","#059669","#34d399","#6ee7b7","#d1fae5"],
+  // Peacock
+  ["#164e63","#0e7490","#0891b2","#06b6d4","#22d3ee","#67e8f9","#cffafe"],
+  // Blueberry
+  ["#1e3a8a","#1d4ed8","#2563eb","#3b82f6","#60a5fa","#93c5fd","#dbeafe"],
+  // Lavender
+  ["#312e81","#4338ca","#4f46e5","#6366f1","#818cf8","#a5b4fc","#e0e7ff"],
+  // Grape
+  ["#4a1d96","#7c3aed","#8b5cf6","#a78bfa","#c4b5fd","#ddd6fe","#ede9fe"],
+];
+
+// Flatten column-major → row-major for a 10-col CSS grid
+const PALETTE_GRID_FLAT: string[] = [];
+for (let row = 0; row < 7; row++) {
+  for (let col = 0; col < 10; col++) {
+    PALETTE_GRID_FLAT.push(PALETTE_COLS[col][row]);
+  }
+}
+
+// Standard named colours (larger circles at the bottom)
+const STANDARD_COLORS: { color: string; label: string }[] = [
+  { color: "#616161", label: "Graphite"   },
+  { color: "#dc2626", label: "Tomato"     },
+  { color: "#f97316", label: "Tangerine"  },
+  { color: "#eab308", label: "Banana"     },
+  { color: "#16a34a", label: "Sage"       },
+  { color: "#059669", label: "Basil"      },
+  { color: "#0891b2", label: "Peacock"    },
+  { color: "#2563eb", label: "Blueberry"  },
+  { color: "#6366f1", label: "Lavender"   },
+  { color: "#8b5cf6", label: "Grape"      },
+];
+
+interface ColorPickerProps {
+  value: string | null;
+  onChange: (color: string | null) => void;
+}
+
+function ColorPicker({ value, onChange }: ColorPickerProps) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  // Close on outside click
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  const pick = (c: string | null) => { onChange(c); setOpen(false); };
+
+  return (
+    <div ref={ref} className="relative">
+      {/* Trigger */}
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="flex items-center gap-2.5 rounded-lg border border-input bg-background px-3 py-2 text-sm hover:bg-accent transition-colors w-full"
+        aria-label="Pick bar color"
+      >
+        {value ? (
+          <span
+            className="inline-block h-5 w-5 shrink-0 rounded-full border border-black/10 shadow-sm"
+            style={{ background: value }}
+          />
+        ) : (
+          <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-dashed border-muted-foreground text-muted-foreground text-xs">
+            ×
+          </span>
+        )}
+        <span className="flex-1 text-left text-xs text-muted-foreground">
+          {value
+            ? (STANDARD_COLORS.find((s) => s.color === value)?.label ?? value)
+            : "Default (group / timeline color)"}
+        </span>
+        <svg className="h-4 w-4 shrink-0 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      {/* Dropdown palette */}
+      {open && (
+        <div className="absolute z-50 mt-1 left-0 min-w-[220px] rounded-xl border border-border bg-popover p-3 shadow-2xl animate-in fade-in slide-in-from-top-1 duration-150">
+
+          {/* ── Reset row ── */}
+          <button
+            type="button"
+            onClick={() => pick(null)}
+            className="mb-2 flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <span className="flex h-5 w-5 items-center justify-center">
+              {value === null ? (
+                <svg viewBox="0 0 24 24" className="h-4 w-4 text-primary" fill="none" stroke="currentColor" strokeWidth={3}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              ) : (
+                <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              )}
+            </span>
+            <span className={value === null ? "font-semibold text-primary" : ""}>Reset</span>
+          </button>
+
+          {/* ── Hue grid: 7 rows × 10 cols ── */}
+          <div
+            className="grid gap-[3px]"
+            style={{ gridTemplateColumns: "repeat(10, 1fr)" }}
+          >
+            {PALETTE_GRID_FLAT.map((c) => (
+              <button
+                key={c}
+                type="button"
+                onClick={() => pick(c)}
+                title={c}
+                aria-label={c}
+                className="relative rounded-full border border-black/10 transition-transform hover:scale-110 focus:outline-none"
+                style={{ background: c, aspectRatio: "1", width: "100%" }}
+              >
+                {value === c && (
+                  <span className="absolute inset-0 flex items-center justify-center">
+                    <svg className="h-2.5 w-2.5 drop-shadow" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth={3.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+
+          {/* ── STANDARD row ── */}
+          <div className="mt-3 border-t border-border/60 pt-2.5">
+            <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+              Standard
+            </p>
+            <div className="flex gap-1.5 flex-wrap">
+              {STANDARD_COLORS.map((s) => (
+                <button
+                  key={s.color}
+                  type="button"
+                  onClick={() => pick(s.color)}
+                  title={s.label}
+                  aria-label={s.label}
+                  className="relative rounded-full border border-black/10 transition-transform hover:scale-110 focus:outline-none"
+                  style={{ background: s.color, width: 22, height: 22 }}
+                >
+                  {value === s.color && (
+                    <span className="absolute inset-0 flex items-center justify-center">
+                      <svg className="h-3 w-3 drop-shadow" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth={3.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+
+        </div>
+      )}
+    </div>
+  );
+}
 
 // ==========================================
 // 1. NOTES & RESOURCES MODAL (EventModal)
@@ -382,12 +569,14 @@ interface EventDetailsModalProps {
     start: EventDate;
     end: EventDate;
     groupId: string | null;
+    color: string | null;
   }) => void;
   onSaveAndAddAnother?: (data: {
     name: string;
     start: EventDate;
     end: EventDate;
     groupId: string | null;
+    color: string | null;
   }) => void;
 }
 
@@ -404,6 +593,7 @@ export function EventDetailsModal({
   const [start, setStart] = useState<EventDate>({ year: 0 });
   const [end, setEnd] = useState<EventDate>({ year: 0 });
   const [groupId, setGroupId] = useState<string | null>(null);
+  const [color, setColor] = useState<string | null>(null);
 
   // Sync state when open state, event or mode changes
   useEffect(() => {
@@ -413,11 +603,13 @@ export function EventDetailsModal({
         setStart(event.start || { year: 0 });
         setEnd(event.end || { year: 0 });
         setGroupId(event.groupId || null);
+        setColor(event.color || null);
       } else {
         setName("");
         setStart({ year: 0 });
         setEnd({ year: 0 });
         setGroupId(null);
+        setColor(null);
       }
     }
   }, [open, event, isAdd]);
@@ -431,6 +623,7 @@ export function EventDetailsModal({
       start,
       end: end.year ? end : start,
       groupId,
+      color: color || null,
     });
     onClose();
   };
@@ -442,6 +635,7 @@ export function EventDetailsModal({
       start,
       end: end.year ? end : start,
       groupId,
+      color: color || null,
     });
     toast.success(`Added event "${name.trim()}"`);
 
@@ -451,7 +645,7 @@ export function EventDetailsModal({
     const endEra = end.year < 0 || Object.is(end.year, -0) ? "BC" : "AD";
     setStart({ year: startEra === "BC" ? -0 : 0 });
     setEnd({ year: endEra === "BC" ? -0 : 0 });
-    // groupId is intentionally not reset
+    // groupId and color are intentionally not reset
   };
 
   return (
@@ -481,6 +675,17 @@ export function EventDetailsModal({
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
+          </div>
+
+          {/* Custom bar color */}
+          <div className="space-y-1.5">
+            <Label className="text-sm font-medium">
+              Bar Color
+              <span className="ml-1.5 text-[11px] font-normal text-muted-foreground">
+                (optional — overrides group color)
+              </span>
+            </Label>
+            <ColorPicker value={color} onChange={setColor} />
           </div>
 
           <div className="space-y-1.5">

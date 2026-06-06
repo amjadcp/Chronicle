@@ -31,6 +31,7 @@ export const TimelineEventSchema = z.object({
   notesMarkdown: z.string().default(""),
   resources: z.array(ResourceSchema).default([]),
   iconResourceId: z.string().nullable().optional().default(null),
+  color: z.string().nullable().optional().default(null),
 });
 export type TimelineEvent = z.infer<typeof TimelineEventSchema>;
 
@@ -122,6 +123,7 @@ export function makeEmptyEvent(): TimelineEvent {
     notesMarkdown: "",
     resources: [],
     iconResourceId: null,
+    color: null,
   };
 }
 
