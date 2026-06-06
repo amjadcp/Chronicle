@@ -23,10 +23,24 @@ export function SiteFooter() {
             <li><Link to="/contributor" className="hover:text-foreground">Contributor Guide</Link></li>
             <li>
               <a
-                href="https://github.com/PLACEHOLDER_OWNER/chronicle-timelines"
+                href="https://github.com/amjadcp/Chronicle"
                 className="hover:text-foreground"
                 target="_blank" rel="noreferrer"
               >GitHub Repository</a>
+            </li>
+            <li>
+              <a
+                href="https://forms.gle/x22a4dTmEQX9xpi18"
+                className="hover:text-foreground"
+                target="_blank" rel="noreferrer"
+              >Report a Bug</a>
+            </li>
+            <li>
+              <a
+                href="https://forms.gle/x22a4dTmEQX9xpi18"
+                className="hover:text-foreground"
+                target="_blank" rel="noreferrer"
+              >Request a Feature</a>
             </li>
           </ul>
         </div>
