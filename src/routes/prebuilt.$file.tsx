@@ -121,14 +121,19 @@ function PrebuiltDetail() {
 
   return (
     <div className="mx-auto max-w-[1400px] w-full px-6 py-6">
-      {/* Header Area with back button containing Timeline Name and Info button */}
+      {/* Header Area with back button, Timeline Name, and Info button */}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2 min-w-0">
-          <Button asChild variant="ghost" size="sm" className="text-muted-foreground font-semibold text-lg hover:bg-transparent -ml-2">
+        <div className="flex items-center gap-3 min-w-0">
+          <Button asChild variant="ghost" size="sm" className="text-muted-foreground hover:bg-transparent -ml-2 shrink-0">
             <Link to="/timelines">
-              <ArrowLeft className="mr-2 h-5 w-5" /> {timeline.name}
+              <ArrowLeft className="mr-2 h-5 w-5" /> Back
             </Link>
           </Button>
+
+          <h1 className="font-semibold text-lg text-foreground truncate max-w-[200px] sm:max-w-[350px]">
+            {timeline.name}
+          </h1>
+
           <Button
             size="icon"
             variant="ghost"

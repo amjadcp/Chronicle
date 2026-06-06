@@ -32,7 +32,7 @@ import {
 import { EventTable } from "@/components/chronicle/EventTable";
 import { TimelineGraph } from "@/components/chronicle/TimelineGraph";
 import { EventModal, EventDetailsModal } from "@/components/chronicle/EventModal";
-import { ArrowLeft, FolderPlus, Group as GroupIcon, Trash2, Ungroup, Plus, Info } from "lucide-react";
+import { ArrowLeft, FolderPlus, Group as GroupIcon, Trash2, Ungroup, Plus, Info, Pencil, Check, X } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/timeline/$id")({
@@ -71,6 +71,20 @@ function TimelineDetail() {
 
   // View States
   const [viewMode, setViewMode] = useState<"graph" | "table">("graph");
+
+  // Name Inline Edit States
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [tempName, setTempName] = useState("");
+
+  const handleSaveName = () => {
+    if (!tempName.trim()) {
+      toast.error("Timeline name cannot be empty");
+      return;
+    }
+    persist({ ...timeline, name: tempName.trim() });
+    setIsEditingName(false);
+    toast.success("Timeline renamed successfully");
+  };
 
   useEffect(() => {
     const t = storage.get(id);
@@ -181,18 +195,61 @@ function TimelineDetail() {
 
   return (
     <div className="mx-auto max-w-[1400px] w-full px-6 py-6">
-      {/* Header Area with back button containing Timeline Name and Info button */}
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        <Button asChild variant="ghost" size="sm" className="text-muted-foreground font-semibold text-lg hover:bg-transparent -ml-2">
+      {/* Header Area with back button, inline editable Timeline Name, and Info button */}
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <Button asChild variant="ghost" size="sm" className="text-muted-foreground hover:bg-transparent -ml-2 shrink-0">
           <Link to="/timelines">
-            <ArrowLeft className="mr-2 h-5 w-5" /> {timeline.name}
+            <ArrowLeft className="mr-2 h-5 w-5" /> Back
           </Link>
         </Button>
+
+        <div className="flex items-center gap-2 min-w-0">
+          {isEditingName ? (
+            <div className="flex items-center gap-1.5">
+              <Input
+                value={tempName}
+                onChange={(e) => setTempName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleSaveName();
+                  if (e.key === "Escape") setIsEditingName(false);
+                }}
+                className="h-8 font-semibold text-lg max-w-[200px] sm:max-w-[300px] bg-background"
+                autoFocus
+              />
+              <Button size="icon" variant="ghost" className="h-8 w-8 text-green-600 hover:text-green-700" onClick={handleSaveName}>
+                <Check className="h-4 w-4" />
+              </Button>
+              <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => setIsEditingName(false)}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          ) : (
+            <>
+              <h1 className="font-semibold text-lg text-foreground truncate max-w-[200px] sm:max-w-[350px]">
+                {timeline.name}
+              </h1>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-8 w-8"
+                onClick={() => {
+                  setTempName(timeline.name);
+                  setIsEditingName(true);
+                }}
+                title="Edit timeline name"
+              >
+                <Pencil className="h-4 w-4 text-muted-foreground" />
+              </Button>
+            </>
+          )}
+        </div>
+
         <Button
           size="icon"
           variant="ghost"
           onClick={() => setInfoDialogOpen(true)}
           title="Timeline Info"
+          className="shrink-0"
         >
           <Info className="h-4.5 w-4.5 text-muted-foreground" />
         </Button>

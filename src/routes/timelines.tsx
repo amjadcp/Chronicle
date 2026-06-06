@@ -5,9 +5,11 @@ import { storage, subscribeTimelines } from "@/lib/chronicle/storage";
 import { fetchPrebuiltIndex, PREBUILT_BASE } from "@/lib/chronicle/prebuilt";
 
 import { exportTimelineHtml } from "@/lib/chronicle/exportHtml";
+import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Copy,
   Download,
@@ -17,6 +19,7 @@ import {
   Trash2,
   Users,
   Calendar as CalIcon,
+  Info,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -31,7 +34,12 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
+const searchSchema = z.object({
+  tab: z.enum(["mine", "prebuilt"]).catch("mine").optional(),
+});
+
 export const Route = createFileRoute("/timelines")({
+  validateSearch: searchSchema,
   head: () => ({
     meta: [
       { title: "Timelines — HistoryTimeline" },
@@ -50,7 +58,8 @@ export const Route = createFileRoute("/timelines")({
 });
 
 function TimelinesPage() {
-  const navigate = useNavigate();
+  const { tab = "mine" } = Route.useSearch();
+  const navigate = useNavigate({ from: "/timelines" });
   const fileInput = useRef<HTMLInputElement>(null);
   const [myTimelines, setMyTimelines] = useState<Timeline[]>([]);
 
@@ -151,13 +160,20 @@ function TimelinesPage() {
         </div>
       </div>
 
-      <Tabs defaultValue="mine" className="mt-8">
+      <Tabs value={tab} onValueChange={(val) => navigate({ search: { tab: val as "mine" | "prebuilt" }, replace: true })} className="mt-8">
         <TabsList>
           <TabsTrigger value="mine">My Timelines</TabsTrigger>
           <TabsTrigger value="prebuilt">Prebuilt Timelines</TabsTrigger>
         </TabsList>
 
         <TabsContent value="mine" className="mt-6">
+          <Alert className="mb-6">
+            <Info className="h-4 w-4" />
+            <AlertTitle>Browser Storage Notice</AlertTitle>
+            <AlertDescription>
+              Timelines you create are stored locally in your browser. Clearing your website cache or data will permanently delete them. Please remember to export your timelines regularly.
+            </AlertDescription>
+          </Alert>
           {myTimelines.length === 0 ? (
             <EmptyState
               title="No timelines yet"
