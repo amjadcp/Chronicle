@@ -1,0 +1,49 @@
+# HistoryTimeline — Netlify deployment configuration
+# https://docs.netlify.com/configure-builds/file-based-configuration/
+
+[build]
+  # Build command
+  command = "npm run build"
+  # Client-side static assets served by Netlify CDN
+  publish = "dist/client"
+
+[build.environment]
+  # Ensure Node 20 (LTS) is used for the build
+  NODE_VERSION = "20"
+
+# Netlify Functions handle the TanStack Start server runtime
+# (SSR + server functions like contributor.functions.ts).
+# The @netlify/vite-plugin-tanstack-start plugin auto-generates
+# these into .netlify/functions-internal during the build.
+[functions]
+  # Node.js 20 runtime for all server functions
+  node_bundler = "esbuild"
+
+# Security headers applied to all responses
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+
+# Long-lived cache for hashed static assets (Vite adds content hashes to filenames)
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# Never cache the manifest (PWA install needs fresh copy)
+[[headers]]
+  for = "/manifest.webmanifest"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+# SPA-style redirects are handled by TanStack Start's server runtime,
+# but add a catch-all fallback just in case the function isn't matched.
+# NOTE: With SSR, all routes go through the Netlify Function, not this redirect.
+# [[redirects]]
+#   from = "/*"
+#   to = "/index.html"
+#   status = 200
