@@ -6,6 +6,8 @@ import {
   Mail,
   CloudUpload,
   CheckCircle2,
+  Check,
+  RefreshCw,
   Info,
   Lock,
   LogOut,
@@ -41,6 +43,7 @@ import {
 import { storage } from "@/lib/chronicle/storage";
 import { Timeline } from "@/lib/chronicle/types";
 import { submitTimeline } from "@/lib/api/contributor.functions";
+import { syncState } from "@/lib/chronicle/syncState";
 import { User } from "firebase/auth";
 
 export const Route = createFileRoute("/contributor")({
@@ -70,6 +73,8 @@ function ContributorPage() {
   const [completingSignIn, setCompletingSignIn] = useState(false);
   const [submittingId, setSubmittingId] = useState<string | null>(null);
   const [myTimelines, setMyTimelines] = useState<Timeline[]>([]);
+  // Bump this counter to force sync-status badges to re-render after a push
+  const [syncTick, setSyncTick] = useState(0);
   
   // PR Success Modal state
   const [successModalOpen, setSuccessModalOpen] = useState(false);
@@ -180,6 +185,10 @@ function ContributorPage() {
       });
 
       if (res.success) {
+        // Mark the timeline as synced in local state
+        syncState.markPushed(timeline.id, timeline.updatedAt);
+        setSyncTick((n) => n + 1);
+
         setSubmitResult({
           timelineName: timeline.name,
           url: res.url,
@@ -381,23 +390,59 @@ function ContributorPage() {
                       </div>
                       
                       <div className="shrink-0 flex items-center gap-2">
-                        <Button 
-                          onClick={() => handleSubmitTimeline(t)}
-                          disabled={submittingId !== null}
-                          className="w-full sm:w-auto"
-                        >
-                          {submittingId === t.id ? (
-                            <>
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                              Submitting...
-                            </>
-                          ) : (
-                            <>
+                        {(() => {
+                          // syncTick is read so re-renders happen after push
+                          void syncTick;
+                          const status = syncState.status(t.id, t.updatedAt);
+
+                          if (submittingId === t.id) {
+                            return (
+                              <Button disabled className="w-full sm:w-auto">
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Submitting...
+                              </Button>
+                            );
+                          }
+
+                          if (status === "synced") {
+                            return (
+                              <Button
+                                variant="outline"
+                                disabled
+                                className="w-full sm:w-auto cursor-default text-emerald-700 dark:text-emerald-400 border-emerald-300 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-950/20"
+                              >
+                                <Check className="mr-2 h-4 w-4" />
+                                Synced
+                              </Button>
+                            );
+                          }
+
+                          if (status === "needs-sync") {
+                            return (
+                              <Button
+                                onClick={() => handleSubmitTimeline(t)}
+                                disabled={submittingId !== null}
+                                variant="outline"
+                                className="w-full sm:w-auto border-amber-400 dark:border-amber-700 text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30"
+                              >
+                                <RefreshCw className="mr-2 h-4 w-4" />
+                                Sync Now
+                              </Button>
+                            );
+                          }
+
+                          // status === "not-pushed"
+                          return (
+                            <Button
+                              onClick={() => handleSubmitTimeline(t)}
+                              disabled={submittingId !== null}
+                              className="w-full sm:w-auto"
+                            >
                               <CloudUpload className="mr-2 h-4 w-4" />
                               Submit Contribution
-                            </>
-                          )}
-                        </Button>
+                            </Button>
+                          );
+                        })()}
                       </div>
                     </Card>
                   ))}
@@ -453,8 +498,8 @@ function ContributorPage() {
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Status:</span>
-              <span className="inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-400">
-                Awaiting Review
+              <span className="inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded bg-green-100 dark:bg-green-950 text-green-800 dark:text-green-400">
+                Published
               </span>
             </div>
             <div className="text-xs text-muted-foreground leading-normal border-t border-border/60 pt-2.5 mt-2.5">

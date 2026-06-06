@@ -73,7 +73,7 @@ async function verifyFirebaseToken(idToken: string, projectId: string): Promise<
   }
 }
 
-// GitHub Sync Helper (commits timeline JSON and creates a pull request)
+// GitHub Sync Helper (commits timeline JSON directly to the default branch)
 async function submitToGithub(
   timeline: any,
   contributorName: string
@@ -89,17 +89,16 @@ async function submitToGithub(
     return {
       success: true,
       simulated: true,
-      url: `https://github.com/${repoOwner}/${repoName}/pull/mock-pr-simulation`,
-      message: "GitHub credentials not configured. Timeline was successfully validated, and a simulated Pull Request was generated.",
+      url: `https://github.com/${repoOwner}/${repoName}/blob/main/timelines/${timeline.id}.json`,
+      message: "GitHub credentials not configured. Timeline was successfully validated, and a simulated commit was generated.",
     };
   }
 
   try {
-    const filename = `timelines/${timeline.id}.json`;
-    const branchName = `submit/${timeline.id}`;
-    const commitMessage = `Add timeline "${timeline.name}" by contributor ${contributorName}`;
-    const prTitle = `Submit Timeline: ${timeline.name}`;
-    const prBody = `This PR adds a new community timeline: **${timeline.name}**\n\nSubmitted by contributor: **${contributorName}**`;
+    const sanitizedName = timeline.name.replace(/[^a-z0-9-_]+/gi, "-").toLowerCase() || "untitled";
+    const idSuffix = timeline.id.includes("-") ? timeline.id.split("-")[0] : timeline.id.substring(0, 8);
+    const filename = `timelines/${sanitizedName}-${idSuffix}.json`;
+    const commitMessage = `Add/Update timeline "${timeline.name}" by contributor ${contributorName}`;
 
     const authHeader = {
       Authorization: `Bearer ${githubToken}`,
@@ -108,7 +107,7 @@ async function submitToGithub(
       "User-Agent": "Chronicle-Timeline-Builder",
     };
 
-    // 1. Get the default branch (usually main or master) SHA
+    // 1. Get the default branch (usually main or master)
     const repoRes = await fetch(`https://api.github.com/repos/${githubRepo}`, { headers: authHeader });
     if (!repoRes.ok) {
       throw new Error(`Failed to fetch repo info: ${repoRes.statusText}`);
@@ -116,45 +115,24 @@ async function submitToGithub(
     const repoData = await repoRes.json();
     const defaultBranch = repoData.default_branch || "main";
 
-    const branchRefRes = await fetch(`https://api.github.com/repos/${githubRepo}/git/ref/heads/${defaultBranch}`, { headers: authHeader });
-    if (!branchRefRes.ok) {
-      throw new Error(`Failed to fetch default branch reference: ${branchRefRes.statusText}`);
-    }
-    const branchRefData = await branchRefRes.json();
-    const baseSha = branchRefData.object.sha;
-
-    // 2. Create a new branch from default branch SHA
-    const createBranchRes = await fetch(`https://api.github.com/repos/${githubRepo}/git/refs`, {
-      method: "POST",
-      headers: authHeader,
-      body: JSON.stringify({
-        ref: `refs/heads/${branchName}`,
-        sha: baseSha,
-      }),
-    });
-
-    if (!createBranchRes.ok && createBranchRes.status !== 422) { // 422 indicates branch already exists
-      throw new Error(`Failed to create branch: ${createBranchRes.statusText}`);
-    }
-
-    // 3. Put the timeline JSON content on the new branch
-    const contentPayload = btoa(unescape(encodeURIComponent(JSON.stringify(timeline, null, 2))));
-    
-    // Check if file already exists on the branch to get its SHA (for update)
+    // 2. Check if file already exists on the default branch to get its SHA (for update)
     let fileSha: string | undefined;
-    const fileRes = await fetch(`https://api.github.com/repos/${githubRepo}/contents/${filename}?ref=${branchName}`, { headers: authHeader });
+    const fileRes = await fetch(`https://api.github.com/repos/${githubRepo}/contents/${filename}?ref=${defaultBranch}`, { headers: authHeader });
     if (fileRes.ok) {
       const fileData = await fileRes.json();
       fileSha = fileData.sha;
     }
 
+    // 3. Put the timeline JSON content directly on the default branch
+    const contentPayload = btoa(unescape(encodeURIComponent(JSON.stringify(timeline, null, 2))));
+    
     const putFileRes = await fetch(`https://api.github.com/repos/${githubRepo}/contents/${filename}`, {
       method: "PUT",
       headers: authHeader,
       body: JSON.stringify({
         message: commitMessage,
         content: contentPayload,
-        branch: branchName,
+        branch: defaultBranch,
         sha: fileSha,
       }),
     });
@@ -163,46 +141,14 @@ async function submitToGithub(
       throw new Error(`Failed to commit timeline JSON: ${putFileRes.statusText}`);
     }
 
-    // 4. Create a Pull Request
-    const prRes = await fetch(`https://api.github.com/repos/${githubRepo}/pulls`, {
-      method: "POST",
-      headers: authHeader,
-      body: JSON.stringify({
-        title: prTitle,
-        head: branchName,
-        base: defaultBranch,
-        body: prBody,
-      }),
-    });
-
-    if (!prRes.ok) {
-      // If PR already exists, we find and return its link
-      if (prRes.status === 422) {
-        const prsRes = await fetch(`https://api.github.com/repos/${githubRepo}/pulls?head=${githubRepo.split("/")[0]}:${branchName}`, { headers: authHeader });
-        if (prsRes.ok) {
-          const prs = await prsRes.json();
-          if (prs.length > 0) {
-            return {
-              success: true,
-              simulated: false,
-              url: prs[0].html_url,
-              message: `Updated existing contribution Pull Request on GitHub.`,
-            };
-          }
-        }
-      }
-      throw new Error(`Failed to create Pull Request: ${prRes.statusText}`);
-    }
-
-    const prData = await prRes.json();
     return {
       success: true,
       simulated: false,
-      url: prData.html_url,
-      message: `Created a contribution Pull Request on GitHub.`,
+      url: `https://github.com/${githubRepo}/blob/${defaultBranch}/${filename}`,
+      message: `Successfully published timeline directly to the "${defaultBranch}" branch.`,
     };
   } catch (err: any) {
-    console.error("GitHub commit/PR failed:", err);
+    console.error("GitHub commit failed:", err);
     throw new Error(`GitHub Sync failed: ${err.message}`);
   }
 }
