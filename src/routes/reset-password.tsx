@@ -16,7 +16,12 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { verifyResetCode, confirmResetPassword, isFirebaseConfigured, getFriendlyAuthErrorMessage } from "@/lib/firebase";
+import {
+  verifyResetCode,
+  confirmResetPassword,
+  isFirebaseConfigured,
+  getFriendlyAuthErrorMessage,
+} from "@/lib/firebase";
 
 export const Route = createFileRoute("/reset-password")({
   head: () => ({
@@ -36,7 +41,7 @@ function ResetPasswordPage() {
   const [email, setEmail] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Form input states
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -49,7 +54,7 @@ function ResetPasswordPage() {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       const code = params.get("oobCode");
-      
+
       if (!code) {
         // In Demo/Simulation mode, if no code is present, we can mock one for testing
         if (!isFirebaseConfigured) {
@@ -64,7 +69,7 @@ function ResetPasswordPage() {
       }
 
       setOobCode(code);
-      
+
       // Verify reset code and retrieve email
       verifyResetCode(code)
         .then((emailAddress) => {
@@ -81,7 +86,7 @@ function ResetPasswordPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    
+
     if (!oobCode) {
       toast.error("Missing reset code.");
       return;
@@ -136,9 +141,7 @@ function ResetPasswordPage() {
             <AlertCircle className="h-6 w-6" />
           </div>
           <h2 className="text-lg font-bold text-foreground">Reset Link Invalid</h2>
-          <p className="text-sm text-muted-foreground mt-2 mb-6">
-            {error}
-          </p>
+          <p className="text-sm text-muted-foreground mt-2 mb-6">{error}</p>
           <Button asChild className="w-full">
             <Link to="/contributor">
               <ArrowLeft className="mr-2 h-4 w-4" />
@@ -153,12 +156,11 @@ function ResetPasswordPage() {
           </div>
           <h2 className="text-xl font-bold text-foreground">Password Updated</h2>
           <p className="text-sm text-muted-foreground mt-2 mb-6">
-            Your password has been successfully updated. You can now sign in to your contributor account.
+            Your password has been successfully updated. You can now sign in to your contributor
+            account.
           </p>
           <Button asChild className="w-full">
-            <Link to="/contributor">
-              Go to Sign In
-            </Link>
+            <Link to="/contributor">Go to Sign In</Link>
           </Button>
         </Card>
       ) : (
@@ -167,7 +169,7 @@ function ResetPasswordPage() {
             <div className="h-12 w-12 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 mb-4">
               <Lock className="h-5 w-5" />
             </div>
-            
+
             {email && (
               <div className="text-center mb-6">
                 <span className="text-xs text-muted-foreground">Resetting password for</span>
@@ -178,9 +180,12 @@ function ResetPasswordPage() {
             {!isFirebaseConfigured && (
               <Alert className="mb-6 border-amber-200 bg-amber-50/50 dark:border-amber-900/30 dark:bg-amber-950/20 text-left">
                 <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                <AlertTitle className="text-amber-800 dark:text-amber-400 font-semibold">Demo Mode Active</AlertTitle>
+                <AlertTitle className="text-amber-800 dark:text-amber-400 font-semibold">
+                  Demo Mode Active
+                </AlertTitle>
                 <AlertDescription className="text-amber-700 dark:text-amber-500 text-xs">
-                  Vite Firebase variables are not set. Submitting this form will simulate a successful password update.
+                  Vite Firebase variables are not set. Submitting this form will simulate a
+                  successful password update.
                 </AlertDescription>
               </Alert>
             )}

@@ -13,42 +13,71 @@ export function SiteFooter() {
         <div>
           <div className="text-sm font-semibold text-foreground">Product</div>
           <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
-            <li><Link to="/timelines" className="hover:text-foreground">Timelines</Link></li>
-            <li><Link to="/about" className="hover:text-foreground">About</Link></li>
+            <li>
+              <Link to="/timelines" className="hover:text-foreground">
+                Timelines
+              </Link>
+            </li>
+            <li>
+              <Link to="/about" className="hover:text-foreground">
+                About
+              </Link>
+            </li>
           </ul>
         </div>
         <div>
           <div className="text-sm font-semibold text-foreground">Community</div>
           <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
-            <li><Link to="/contributor" className="hover:text-foreground">Contributor Guide</Link></li>
+            <li>
+              <Link to="/contributor" className="hover:text-foreground">
+                Contributor Guide
+              </Link>
+            </li>
             <li>
               <a
                 href="https://github.com/amjadcp/Chronicle"
                 className="hover:text-foreground"
-                target="_blank" rel="noreferrer"
-              >GitHub Repository</a>
+                target="_blank"
+                rel="noreferrer"
+              >
+                GitHub Repository
+              </a>
             </li>
             <li>
               <a
                 href="https://forms.gle/x22a4dTmEQX9xpi18"
                 className="hover:text-foreground"
-                target="_blank" rel="noreferrer"
-              >Report a Bug</a>
+                target="_blank"
+                rel="noreferrer"
+              >
+                Report a Bug
+              </a>
             </li>
             <li>
               <a
                 href="https://forms.gle/x22a4dTmEQX9xpi18"
                 className="hover:text-foreground"
-                target="_blank" rel="noreferrer"
-              >Request a Feature</a>
+                target="_blank"
+                rel="noreferrer"
+              >
+                Request a Feature
+              </a>
             </li>
           </ul>
         </div>
         <div>
           <div className="text-sm font-semibold text-foreground">Legal</div>
           <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
-            <li><Link to="/about" hash="privacy" className="hover:text-foreground">Privacy Policy</Link></li>
-            <li><Link to="/contributor" className="hover:text-foreground">Contact</Link></li>
+            <li>
+              <Link to="/about" hash="privacy" className="hover:text-foreground">
+                Privacy Policy
+              </Link>
+            </li>
+            <li>
+              <Link to="/contributor" className="hover:text-foreground">
+                Contact
+              </Link>
+            </li>
           </ul>
         </div>
       </div>

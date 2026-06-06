@@ -9,6 +9,7 @@ import {
   TimelineEvent,
   newId,
   EventDate,
+  formatEventDate,
 } from "@/lib/chronicle/types";
 import { sortEvents } from "@/lib/chronicle/sort";
 import { Button } from "@/components/ui/button";
@@ -29,10 +30,23 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import { EventTable } from "@/components/chronicle/EventTable";
 import { TimelineGraph } from "@/components/chronicle/TimelineGraph";
 import { EventModal, EventDetailsModal } from "@/components/chronicle/EventModal";
-import { ArrowLeft, FolderPlus, Group as GroupIcon, Trash2, Ungroup, Plus, Info, Pencil, Check, X } from "lucide-react";
+import {
+  ArrowLeft,
+  FolderPlus,
+  Group as GroupIcon,
+  Trash2,
+  Ungroup,
+  Plus,
+  Info,
+  Pencil,
+  Check,
+  X,
+  FileUp,
+} from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/timeline/$id")({
@@ -64,10 +78,17 @@ function TimelineDetail() {
   const [groupName, setGroupName] = useState("");
 
   // Modal States
-  const [openEventId, setOpenEventId] = useState<string | null>(null);     // Notes & Resources Modal
-  const [editEventId, setEditEventId] = useState<string | null>(null);     // Event Details Modal (Edit)
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);             // Event Details Modal (Add)
-  const [infoDialogOpen, setInfoDialogOpen] = useState(false);             // Timeline Info Dialog
+  const [openEventId, setOpenEventId] = useState<string | null>(null); // Notes & Resources Modal
+  const [editEventId, setEditEventId] = useState<string | null>(null); // Event Details Modal (Edit)
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false); // Event Details Modal (Add)
+  const [infoDialogOpen, setInfoDialogOpen] = useState(false); // Timeline Info Dialog
+
+  // Import Dialog States
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [sourceTimelineId, setSourceTimelineId] = useState<string | null>(null);
+  const [selectedSourceEventIds, setSelectedSourceEventIds] = useState<Set<string>>(new Set());
+  const [importGroups, setImportGroups] = useState(true);
+  const [importSearchQuery, setImportSearchQuery] = useState("");
 
   // View States
   const [viewMode, setViewMode] = useState<"graph" | "table">("graph");
@@ -101,6 +122,22 @@ function TimelineDetail() {
     [timeline, sort],
   );
 
+  const otherTimelines = useMemo(() => {
+    if (!timeline) return [];
+    return storage.list().filter((t) => t.id !== timeline.id);
+  }, [timeline]);
+
+  const selectedSourceTimeline = useMemo(() => {
+    return otherTimelines.find((t) => t.id === sourceTimelineId) ?? null;
+  }, [otherTimelines, sourceTimelineId]);
+
+  const filteredSourceEvents = useMemo(() => {
+    if (!selectedSourceTimeline) return [];
+    return selectedSourceTimeline.events.filter((e) =>
+      e.name.toLowerCase().includes(importSearchQuery.toLowerCase()),
+    );
+  }, [selectedSourceTimeline, importSearchQuery]);
+
   if (!timeline) return null;
 
   const persist = (next: Timeline) => {
@@ -117,10 +154,12 @@ function TimelineDetail() {
   };
 
   const updateEvent = (eid: string, patch: Partial<TimelineEvent>) =>
-    persist({ ...timeline, events: timeline.events.map((e) => (e.id === eid ? { ...e, ...patch } : e)) });
+    persist({
+      ...timeline,
+      events: timeline.events.map((e) => (e.id === eid ? { ...e, ...patch } : e)),
+    });
 
-  const addEvent = (e: TimelineEvent) =>
-    persist({ ...timeline, events: [...timeline.events, e] });
+  const addEvent = (e: TimelineEvent) => persist({ ...timeline, events: [...timeline.events, e] });
 
   const deleteEvent = (eid: string) =>
     persist({ ...timeline, events: timeline.events.filter((e) => e.id !== eid) });
@@ -128,7 +167,9 @@ function TimelineDetail() {
   const doGroup = () => {
     if (!groupName.trim() || selected.size === 0) return;
     const usedColors = new Set(timeline.groups.map((g) => g.color));
-    const color = GROUP_COLORS.find((c) => !usedColors.has(c)) ?? GROUP_COLORS[timeline.groups.length % GROUP_COLORS.length];
+    const color =
+      GROUP_COLORS.find((c) => !usedColors.has(c)) ??
+      GROUP_COLORS[timeline.groups.length % GROUP_COLORS.length];
     const group: Group = { id: newId(), name: groupName.trim(), color };
     persist({
       ...timeline,
@@ -193,11 +234,87 @@ function TimelineDetail() {
     addEvent(newEvt);
   };
 
+  const handleImportEvents = () => {
+    if (!sourceTimelineId || !timeline) return;
+    const sourceTimeline = storage.get(sourceTimelineId);
+    if (!sourceTimeline) {
+      toast.error("Source timeline not found");
+      return;
+    }
+
+    const eventsToImport = sourceTimeline.events.filter((e) => selectedSourceEventIds.has(e.id));
+    if (eventsToImport.length === 0) {
+      toast.error("No events selected to import");
+      return;
+    }
+
+    const groupMap: Record<string, string> = {};
+    const nextGroups = [...timeline.groups];
+
+    if (importGroups) {
+      const referencedGroupIds = new Set<string>();
+      eventsToImport.forEach((e) => {
+        if (e.groupId) referencedGroupIds.add(e.groupId);
+      });
+
+      sourceTimeline.groups.forEach((sourceGroup) => {
+        if (!referencedGroupIds.has(sourceGroup.id)) return;
+
+        const existingGroup = nextGroups.find(
+          (g) => g.name.toLowerCase().trim() === sourceGroup.name.toLowerCase().trim(),
+        );
+
+        if (existingGroup) {
+          groupMap[sourceGroup.id] = existingGroup.id;
+        } else {
+          const newGroupId = newId();
+          nextGroups.push({
+            id: newGroupId,
+            name: sourceGroup.name,
+            color: sourceGroup.color,
+          });
+          groupMap[sourceGroup.id] = newGroupId;
+        }
+      });
+    }
+
+    const importedEvents: TimelineEvent[] = eventsToImport.map((e) => ({
+      ...e,
+      id: newId(),
+      groupId: e.groupId && importGroups ? (groupMap[e.groupId] ?? null) : null,
+      resources: e.resources ? e.resources.map((r) => ({ ...r, id: newId() })) : [],
+    }));
+
+    persist({
+      ...timeline,
+      groups: nextGroups,
+      events: [...timeline.events, ...importedEvents],
+    });
+
+    setImportDialogOpen(false);
+    setSourceTimelineId(null);
+    setSelectedSourceEventIds(new Set());
+    setImportSearchQuery("");
+
+    toast.success(
+      `Successfully imported ${importedEvents.length} event(s)${
+        importGroups && Object.keys(groupMap).length > 0
+          ? ` and ${Object.keys(groupMap).length} group(s)`
+          : ""
+      }`,
+    );
+  };
+
   return (
     <div className="mx-auto max-w-[1400px] w-full px-6 py-6">
       {/* Header Area with back button, inline editable Timeline Name, and Info button */}
       <div className="mb-4 flex flex-wrap items-center gap-3">
-        <Button asChild variant="ghost" size="sm" className="text-muted-foreground hover:bg-transparent -ml-2 shrink-0">
+        <Button
+          asChild
+          variant="ghost"
+          size="sm"
+          className="text-muted-foreground hover:bg-transparent -ml-2 shrink-0"
+        >
           <Link to="/timelines">
             <ArrowLeft className="mr-2 h-5 w-5" /> Back
           </Link>
@@ -216,10 +333,20 @@ function TimelineDetail() {
                 className="h-8 font-semibold text-lg max-w-[200px] sm:max-w-[300px] bg-background"
                 autoFocus
               />
-              <Button size="icon" variant="ghost" className="h-8 w-8 text-green-600 hover:text-green-700" onClick={handleSaveName}>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-8 w-8 text-green-600 hover:text-green-700"
+                onClick={handleSaveName}
+              >
                 <Check className="h-4 w-4" />
               </Button>
-              <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => setIsEditingName(false)}>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-8 w-8 text-destructive"
+                onClick={() => setIsEditingName(false)}
+              >
                 <X className="h-4 w-4" />
               </Button>
             </div>
@@ -318,11 +445,22 @@ function TimelineDetail() {
             </button>
           </div>
 
-          {/* Add Event Button */}
+          {/* Import Events Button */}
           <Button
             size="sm"
-            onClick={() => setIsAddModalOpen(true)}
+            variant="outline"
+            onClick={() => {
+              setImportDialogOpen(true);
+              setSourceTimelineId(null);
+              setSelectedSourceEventIds(new Set());
+              setImportSearchQuery("");
+            }}
           >
+            <FileUp className="mr-1.5 h-4 w-4" /> Import Events
+          </Button>
+
+          {/* Add Event Button */}
+          <Button size="sm" onClick={() => setIsAddModalOpen(true)}>
             <Plus className="mr-1.5 h-4 w-4" /> Add Event
           </Button>
         </div>
@@ -330,7 +468,10 @@ function TimelineDetail() {
 
       {/* Graph Section */}
       {viewMode === "graph" && (
-        <section className="mt-4 animate-in fade-in slide-in-from-bottom-4 duration-300" aria-label="Timeline graph">
+        <section
+          className="mt-4 animate-in fade-in slide-in-from-bottom-4 duration-300"
+          aria-label="Timeline graph"
+        >
           <TimelineGraph
             events={timeline.events}
             groups={timeline.groups}
@@ -342,7 +483,10 @@ function TimelineDetail() {
 
       {/* Table Section */}
       {viewMode === "table" && (
-        <section className="mt-4 animate-in fade-in slide-in-from-bottom-4 duration-300" aria-label="Events table">
+        <section
+          className="mt-4 animate-in fade-in slide-in-from-bottom-4 duration-300"
+          aria-label="Events table"
+        >
           <div className="mb-3">
             <h3 className="text-lg font-semibold text-foreground">Events ({sorted.length})</h3>
           </div>
@@ -446,18 +590,221 @@ function TimelineDetail() {
           <DialogHeader>
             <DialogTitle>Create group</DialogTitle>
           </DialogHeader>
-          <Label htmlFor="grpname" className="text-sm">Group name</Label>
+          <Label htmlFor="grpname" className="text-sm">
+            Group name
+          </Label>
           <Input
             id="grpname"
             value={groupName}
             onChange={(e) => setGroupName(e.target.value)}
             placeholder="e.g. Mauryan Empire"
-            onKeyDown={(e) => { if (e.key === "Enter") doGroup(); }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") doGroup();
+            }}
           />
           <DialogFooter>
-            <Button variant="outline" onClick={() => setGroupDialogOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setGroupDialogOpen(false)}>
+              Cancel
+            </Button>
             <Button onClick={doGroup} disabled={!groupName.trim()}>
               <GroupIcon className="mr-2 h-4 w-4" /> Create
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Import Events Dialog */}
+      <Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Import Events</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            {/* Timeline Selector */}
+            <div className="space-y-1.5">
+              <Label htmlFor="import-source-select">Source Timeline</Label>
+              {otherTimelines.length === 0 ? (
+                <div className="rounded-md border border-dashed border-border bg-surface p-6 text-center text-muted-foreground">
+                  <Info className="mx-auto mb-2 h-8 w-8 text-muted-foreground/60" />
+                  <p className="text-sm font-semibold">No other timelines found</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Create another timeline first to import events from it.
+                  </p>
+                </div>
+              ) : (
+                <Select
+                  value={sourceTimelineId || ""}
+                  onValueChange={(val) => {
+                    setSourceTimelineId(val);
+                    const selectedTl = otherTimelines.find((t) => t.id === val);
+                    if (selectedTl) {
+                      setSelectedSourceEventIds(new Set(selectedTl.events.map((e) => e.id)));
+                    } else {
+                      setSelectedSourceEventIds(new Set());
+                    }
+                    setImportSearchQuery("");
+                  }}
+                >
+                  <SelectTrigger id="import-source-select" className="w-full bg-background">
+                    <SelectValue placeholder="Choose a timeline to import from..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {otherTimelines.map((t) => (
+                      <SelectItem key={t.id} value={t.id}>
+                        {t.name} ({t.events.length} events)
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+
+            {/* Events Selection Checklist */}
+            {selectedSourceTimeline && (
+              <>
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <Label>Select Events to Import</Label>
+                    <span className="text-xs text-muted-foreground">
+                      {selectedSourceEventIds.size} of {selectedSourceTimeline.events.length}{" "}
+                      selected
+                    </span>
+                  </div>
+
+                  <Input
+                    placeholder="Filter events by name..."
+                    value={importSearchQuery}
+                    onChange={(e) => setImportSearchQuery(e.target.value)}
+                    className="h-9 bg-background"
+                  />
+
+                  {filteredSourceEvents.length === 0 ? (
+                    <div className="rounded-md border border-border bg-surface p-6 text-center text-xs text-muted-foreground">
+                      No matching events found.
+                    </div>
+                  ) : (
+                    <>
+                      {/* Checkbox Checklist Panel */}
+                      <div className="max-h-[220px] overflow-y-auto rounded-md border border-border bg-background p-2 space-y-1">
+                        {filteredSourceEvents.map((e) => {
+                          const isChecked = selectedSourceEventIds.has(e.id);
+                          const grp = selectedSourceTimeline.groups.find((g) => g.id === e.groupId);
+                          return (
+                            <label
+                              key={e.id}
+                              className="flex items-start gap-2.5 rounded px-2.5 py-2 hover:bg-surface/50 transition-colors cursor-pointer select-none"
+                            >
+                              <Checkbox
+                                id={`event-check-${e.id}`}
+                                checked={isChecked}
+                                onCheckedChange={(checked) => {
+                                  setSelectedSourceEventIds((prev) => {
+                                    const next = new Set(prev);
+                                    if (checked) {
+                                      next.add(e.id);
+                                    } else {
+                                      next.delete(e.id);
+                                    }
+                                    return next;
+                                  });
+                                }}
+                              />
+                              <div className="flex-1 min-w-0 text-xs">
+                                <div className="font-semibold text-foreground truncate">
+                                  {e.name}
+                                </div>
+                                <div className="text-muted-foreground flex flex-wrap items-center gap-1.5 mt-0.5">
+                                  <span>{formatEventDate(e.start)}</span>
+                                  <span>•</span>
+                                  {grp && (
+                                    <span className="inline-flex items-center gap-1 rounded bg-secondary px-1.5 py-0.25 text-[10px] text-foreground border border-border">
+                                      <span
+                                        className="h-1.5 w-1.5 rounded-full"
+                                        style={{ background: grp.color }}
+                                      />
+                                      {grp.name}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </label>
+                          );
+                        })}
+                      </div>
+
+                      {/* Select All Filtered Toggle */}
+                      <div className="flex items-center gap-2 px-1">
+                        <Checkbox
+                          id="select-all-filtered"
+                          checked={
+                            filteredSourceEvents.length > 0 &&
+                            filteredSourceEvents.every((e) => selectedSourceEventIds.has(e.id))
+                          }
+                          onCheckedChange={(checked) => {
+                            setSelectedSourceEventIds((prev) => {
+                              const next = new Set(prev);
+                              filteredSourceEvents.forEach((e) => {
+                                if (checked) {
+                                  next.add(e.id);
+                                } else {
+                                  next.delete(e.id);
+                                }
+                              });
+                              return next;
+                            });
+                          }}
+                        />
+                        <Label
+                          htmlFor="select-all-filtered"
+                          className="text-xs text-muted-foreground cursor-pointer select-none"
+                        >
+                          Select All Filtered ({filteredSourceEvents.length})
+                        </Label>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* Import Groups Switch */}
+                <div className="flex items-center gap-3 rounded-lg border border-border bg-surface p-3">
+                  <Switch
+                    id="import-groups-switch"
+                    checked={importGroups}
+                    onCheckedChange={setImportGroups}
+                  />
+                  <div className="space-y-0.5">
+                    <Label
+                      htmlFor="import-groups-switch"
+                      className="text-xs font-semibold text-foreground cursor-pointer"
+                    >
+                      Import and Map Groups
+                    </Label>
+                    <p className="text-[10px] text-muted-foreground leading-snug">
+                      Copy referenced color groups. Reuses existing groups if names match.
+                    </p>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setImportDialogOpen(false);
+                setSourceTimelineId(null);
+                setSelectedSourceEventIds(new Set());
+                setImportSearchQuery("");
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleImportEvents}
+              disabled={!sourceTimelineId || selectedSourceEventIds.size === 0}
+            >
+              Import {selectedSourceEventIds.size > 0 ? `${selectedSourceEventIds.size} ` : ""}
+              Event(s)
             </Button>
           </DialogFooter>
         </DialogContent>

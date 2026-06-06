@@ -60,7 +60,7 @@ export function exportTimelineHtml(timeline: Timeline): string {
           <i data-lucide="calendar" class="h-3.5 w-3.5"></i>
           <span id="event-count-header">${timeline.events.length}</span> events
         </span>
-        <a href="${origin || '/'}" target="_blank" class="hover:text-blue-600 transition-colors hover:underline">Created with Chronicle</a>
+        <a href="${origin || "/"}" target="_blank" class="hover:text-blue-600 transition-colors hover:underline">Created with Chronicle</a>
       </div>
     </div>
   </header>

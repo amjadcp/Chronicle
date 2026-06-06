@@ -33,9 +33,7 @@ export async function fetchPrebuiltIndex(): Promise<PrebuiltSummary[]> {
     if (!dirRes.ok) return [];
 
     const entries: { name: string; download_url: string }[] = await dirRes.json();
-    const jsonFiles = entries.filter(
-      (e) => e.name.endsWith(".json") && e.name !== "index.json"
-    );
+    const jsonFiles = entries.filter((e) => e.name.endsWith(".json") && e.name !== "index.json");
 
     if (jsonFiles.length === 0) return [];
 
@@ -57,13 +55,13 @@ export async function fetchPrebuiltIndex(): Promise<PrebuiltSummary[]> {
           updatedAt: t.updatedAt,
         };
         return summary;
-      })
+      }),
     );
 
     return results
       .filter(
         (r): r is PromiseFulfilledResult<PrebuiltSummary> =>
-          r.status === "fulfilled" && r.value !== null
+          r.status === "fulfilled" && r.value !== null,
       )
       .map((r) => r.value)
       .sort((a, b) => (b.updatedAt > a.updatedAt ? 1 : -1));

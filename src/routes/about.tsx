@@ -10,7 +10,10 @@ export const Route = createFileRoute("/about")({
           "About HistoryTimeline: an open historical timeline builder for researchers, educators, and history enthusiasts.",
       },
       { property: "og:title", content: "About HistoryTimeline" },
-      { property: "og:description", content: "Open historical timeline builder for researchers and educators." },
+      {
+        property: "og:description",
+        content: "Open historical timeline builder for researchers and educators.",
+      },
       { property: "og:url", content: "/about" },
     ],
     links: [{ rel: "canonical", href: "/about" }],
@@ -21,7 +24,9 @@ export const Route = createFileRoute("/about")({
 function AboutPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-16">
-      <h1 className="text-3xl font-semibold tracking-tight text-foreground">About HistoryTimeline</h1>
+      <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+        About HistoryTimeline
+      </h1>
       <p className="mt-4 text-base leading-relaxed text-muted-foreground">
         HistoryTimeline is an interactive historical timeline builder designed for history learners,
         researchers, educators, writers, and content creators. It runs entirely in your browser,
@@ -43,11 +48,13 @@ function AboutPage() {
         React, TypeScript, TanStack Start, Tailwind CSS, shadcn/ui, Tiptap, and SVG.
       </p>
 
-      <h2 id="privacy" className="mt-10 text-xl font-semibold text-foreground">Privacy Policy</h2>
+      <h2 id="privacy" className="mt-10 text-xl font-semibold text-foreground">
+        Privacy Policy
+      </h2>
       <p className="mt-3 text-sm text-muted-foreground">
         HistoryTimeline does not require an account for normal use. Timelines you create are stored
-        only in your browser's local storage on your device. We do not collect, transmit, or
-        sell any personal data. Prebuilt timelines are fetched from a public GitHub repository.
+        only in your browser's local storage on your device. We do not collect, transmit, or sell
+        any personal data. Prebuilt timelines are fetched from a public GitHub repository.
       </p>
     </div>
   );

@@ -13,10 +13,10 @@ Chronicle enables UPSC/PSC aspirants, teachers, and history enthusiasts to creat
 
 The application combines:
 
-* Timeline management
-* Historical event organization
-* Visual chronology analysis
-* Community-contributed timeline repository
+- Timeline management
+- Historical event organization
+- Visual chronology analysis
+- Community-contributed timeline repository
 
 without requiring software installation or user accounts for regular use.
 
@@ -50,11 +50,11 @@ No login required.
 
 Capabilities:
 
-* View prebuilt timelines
-* Create timelines
-* Edit timelines
-* Export timelines
-* Import timelines
+- View prebuilt timelines
+- Create timelines
+- Edit timelines
+- Export timelines
+- Import timelines
 
 Storage:
 
@@ -70,9 +70,9 @@ Authenticated through Firebase.
 
 Capabilities:
 
-* All Guest capabilities
-* Submit timelines to community repository
-* Update own submitted timelines
+- All Guest capabilities
+- Submit timelines to community repository
+- Update own submitted timelines
 
 ---
 
@@ -82,9 +82,9 @@ Manual contributor management.
 
 Capabilities:
 
-* Approve contributors
-* Review submissions
-* Manage official timelines
+- Approve contributors
+- Review submissions
+- Manage official timelines
 
 ---
 
@@ -145,11 +145,11 @@ Destination
 
 ### Features
 
-* Visual timeline graph
-* Event grouping
-* Markdown notes
-* JSON import/export
-* HTML export
+- Visual timeline graph
+- Event grouping
+- Markdown notes
+- JSON import/export
+- HTML export
 
 ### Contributor Section
 
@@ -161,8 +161,8 @@ Connect via LinkedIn or Email.
 
 Buttons:
 
-* LinkedIn
-* Email
+- LinkedIn
+- Email
 
 ---
 
@@ -216,10 +216,10 @@ Updated Date
 
 Actions
 
-* Open
-* Duplicate
-* Export
-* Delete
+- Open
+- Duplicate
+- Export
+- Delete
 
 ---
 
@@ -395,8 +395,8 @@ Mauryan Empire
 
 Displays:
 
-* Event Name
-* Optional Icon
+- Event Name
+- Optional Icon
 
 ---
 
@@ -416,12 +416,12 @@ Rich Text Editor
 
 Supports:
 
-* Bold
-* Italic
-* Underline
-* Lists
-* Headings
-* Links
+- Bold
+- Italic
+- Underline
+- Lists
+- Headings
+- Links
 
 Stored as Markdown.
 
@@ -581,8 +581,8 @@ Supported
 
 Validation:
 
-* Schema validation
-* Duplicate detection
+- Schema validation
+- Duplicate detection
 
 ---
 
@@ -610,10 +610,10 @@ Single file.
 
 Contains:
 
-* HTML
-* CSS
-* JavaScript
-* Timeline Data
+- HTML
+- CSS
+- JavaScript
+- Timeline Data
 
 Embedded.
 
@@ -673,7 +673,7 @@ Firebase Authentication
 
 Supported:
 
-* Google Login
+- Google Login
 
 ---
 
@@ -721,11 +721,11 @@ Responsibilities
 
 Netlify Function:
 
-* Verify Firebase token
-* Check contributor permission
-* Validate schema
-* Commit JSON
-* Update index
+- Verify Firebase token
+- Check contributor permission
+- Validate schema
+- Commit JSON
+- Update index
 
 ---
 
@@ -803,18 +803,18 @@ Included
 
 ### Version 2
 
-* Historical map integration
-* Timeline comparison mode
-* AI-generated timeline summaries
-* AI-assisted event extraction
-* Search across all timelines
-* Timeline sharing URL
+- Historical map integration
+- Timeline comparison mode
+- AI-generated timeline summaries
+- AI-assisted event extraction
+- Search across all timelines
+- Timeline sharing URL
 
 ### Version 3
 
-* Collaborative editing
-* Timeline quizzes for UPSC revision
-* Spaced repetition integration
-* Offline PWA support
+- Collaborative editing
+- Timeline quizzes for UPSC revision
+- Spaced repetition integration
+- Offline PWA support
 
 This scope is well-sized for a React + TypeScript application and can realistically support 500-event UPSC timelines while keeping all personal data local unless the user explicitly publishes a timeline.

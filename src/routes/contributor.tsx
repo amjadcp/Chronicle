@@ -56,7 +56,10 @@ export const Route = createFileRoute("/contributor")({
           "Become a HistoryTimeline contributor and submit historical timelines to the public community library.",
       },
       { property: "og:title", content: "Contribute to HistoryTimeline" },
-      { property: "og:description", content: "Submit historical timelines to the HistoryTimeline community library." },
+      {
+        property: "og:description",
+        content: "Submit historical timelines to the HistoryTimeline community library.",
+      },
       { property: "og:url", content: "/contributor" },
     ],
     links: [{ rel: "canonical", href: "/contributor" }],
@@ -67,7 +70,7 @@ export const Route = createFileRoute("/contributor")({
 function ContributorPage() {
   const [user, setUser] = useState<User | SimulatedUser | null>(null);
   const [loading, setLoading] = useState(true);
-  
+
   // Auth Form State
   const [authMode, setAuthMode] = useState<"login" | "forgot">("login");
   const [emailInput, setEmailInput] = useState("");
@@ -79,7 +82,7 @@ function ContributorPage() {
   const [myTimelines, setMyTimelines] = useState<Timeline[]>([]);
   // Bump this counter to force sync-status badges to re-render after a push
   const [syncTick, setSyncTick] = useState(0);
-  
+
   // PR Success Modal state
   const [successModalOpen, setSuccessModalOpen] = useState(false);
   const [submitResult, setSubmitResult] = useState<{
@@ -163,7 +166,7 @@ function ContributorPage() {
 
     try {
       setSubmittingId(timeline.id);
-      
+
       // Get Firebase IdToken (needed for server function auth verification)
       const idToken = await user.getIdToken();
 
@@ -172,7 +175,7 @@ function ContributorPage() {
         data: {
           idToken,
           timeline,
-        }
+        },
       });
 
       if (res.success) {
@@ -212,9 +215,9 @@ function ContributorPage() {
           Contribute Historical Timelines
         </h1>
         <p className="mt-4 text-base leading-relaxed text-muted-foreground max-w-2xl">
-          HistoryTimeline hosts a shared library of historical timelines. 
-          Once your email is approved and registered, you can publish your custom timelines directly to the shared library 
-          for everyone to view and study.
+          HistoryTimeline hosts a shared library of historical timelines. Once your email is
+          approved and registered, you can publish your custom timelines directly to the shared
+          library for everyone to view and study.
         </p>
       </div>
 
@@ -232,7 +235,7 @@ function ContributorPage() {
               <div className="h-12 w-12 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 mb-4">
                 <Lock className="h-5 w-5" />
               </div>
-              
+
               {authMode === "login" && (
                 <>
                   <h2 className="text-xl font-bold text-foreground">Contributor Sign In</h2>
@@ -254,9 +257,12 @@ function ContributorPage() {
               {!isFirebaseConfigured && (
                 <Alert className="mb-6 border-amber-200 bg-amber-50/50 dark:border-amber-900/30 dark:bg-amber-950/20 text-left">
                   <Info className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                  <AlertTitle className="text-amber-800 dark:text-amber-400 font-semibold">Demo / Simulation Mode Active</AlertTitle>
+                  <AlertTitle className="text-amber-800 dark:text-amber-400 font-semibold">
+                    Demo / Simulation Mode Active
+                  </AlertTitle>
                   <AlertDescription className="text-amber-700 dark:text-amber-500 text-xs">
-                    Vite Firebase variables are not set. Signing in will generate a simulated session with a mock profile.
+                    Vite Firebase variables are not set. Signing in will generate a simulated
+                    session with a mock profile.
                   </AlertDescription>
                 </Alert>
               )}
@@ -271,17 +277,32 @@ function ContributorPage() {
 
                   <div className="mt-4 flex gap-2 text-xs text-amber-700 dark:text-amber-400 bg-amber-50/60 dark:bg-amber-950/20 p-3 rounded-lg border border-amber-200/50 text-left leading-normal">
                     <Info className="h-4 w-4 shrink-0 mt-0.5" />
-                    <span>If you don't see the email within a few minutes, please check your <strong>Spam, Junk, or Promotions</strong> folders as it may have been routed there.</span>
+                    <span>
+                      If you don't see the email within a few minutes, please check your{" "}
+                      <strong>Spam, Junk, or Promotions</strong> folders as it may have been routed
+                      there.
+                    </span>
                   </div>
 
-                  <Button variant="outline" size="sm" onClick={() => { setForgotSent(false); setAuthMode("login"); }} className="mt-4 w-full">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setForgotSent(false);
+                      setAuthMode("login");
+                    }}
+                    className="mt-4 w-full"
+                  >
                     Back to Sign In
                   </Button>
                 </div>
               ) : (
                 <form onSubmit={handleAuthSubmit} className="w-full space-y-4 text-left">
                   <div className="space-y-2">
-                    <Label htmlFor="email" className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                    <Label
+                      htmlFor="email"
+                      className="text-xs font-semibold text-muted-foreground uppercase tracking-wide"
+                    >
                       Email Address
                     </Label>
                     <Input
@@ -298,7 +319,10 @@ function ContributorPage() {
                   {authMode === "login" && (
                     <div className="space-y-2">
                       <div className="flex justify-between items-center">
-                        <Label htmlFor="password" className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                        <Label
+                          htmlFor="password"
+                          className="text-xs font-semibold text-muted-foreground uppercase tracking-wide"
+                        >
                           Password
                         </Label>
                         {authMode === "login" && (
@@ -346,7 +370,10 @@ function ContributorPage() {
                     <div className="text-center mt-3">
                       <button
                         type="button"
-                        onClick={() => { setAuthMode("login"); setForgotSent(false); }}
+                        onClick={() => {
+                          setAuthMode("login");
+                          setForgotSent(false);
+                        }}
                         className="text-xs text-muted-foreground hover:text-foreground hover:underline"
                       >
                         Back to Sign In
@@ -365,7 +392,11 @@ function ContributorPage() {
               <div className="flex items-center gap-3.5 text-center sm:text-left flex-col sm:flex-row">
                 <div className="h-14 w-14 rounded-full overflow-hidden border-2 border-primary/20 bg-muted shrink-0">
                   {user.photoURL ? (
-                    <img src={user.photoURL} alt={user.displayName || "Avatar"} className="h-full w-full object-cover" />
+                    <img
+                      src={user.photoURL}
+                      alt={user.displayName || "Avatar"}
+                      className="h-full w-full object-cover"
+                    />
                   ) : (
                     <div className="h-full w-full flex items-center justify-center font-bold text-lg text-primary bg-primary/10">
                       {(user.displayName || user.email || "C")[0].toUpperCase()}
@@ -383,7 +414,12 @@ function ContributorPage() {
                   </div>
                 </div>
               </div>
-              <Button onClick={handleSignOut} variant="outline" size="sm" className="w-full sm:w-auto">
+              <Button
+                onClick={handleSignOut}
+                variant="outline"
+                size="sm"
+                className="w-full sm:w-auto"
+              >
                 <LogOut className="mr-2 h-4 w-4" />
                 Sign Out
               </Button>
@@ -409,13 +445,22 @@ function ContributorPage() {
               ) : (
                 <div className="grid gap-3">
                   {myTimelines.map((t) => (
-                    <Card key={t.id} className="p-4 border-border flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:shadow-md transition-shadow">
+                    <Card
+                      key={t.id}
+                      className="p-4 border-border flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:shadow-md transition-shadow"
+                    >
                       <div className="min-w-0">
-                        <Link to="/timeline/$id" params={{ id: t.id }} className="font-bold text-base hover:underline text-foreground block truncate">
+                        <Link
+                          to="/timeline/$id"
+                          params={{ id: t.id }}
+                          className="font-bold text-base hover:underline text-foreground block truncate"
+                        >
                           {t.name}
                         </Link>
                         {t.description && (
-                          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{t.description}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
+                            {t.description}
+                          </p>
                         )}
                         <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
                           <span className="inline-flex items-center gap-1">
@@ -425,7 +470,7 @@ function ContributorPage() {
                           <span>Updated {new Date(t.updatedAt).toLocaleDateString()}</span>
                         </div>
                       </div>
-                      
+
                       <div className="shrink-0 flex items-center gap-2">
                         {(() => {
                           // syncTick is read so re-renders happen after push
@@ -495,8 +540,9 @@ function ContributorPage() {
         <div className="rounded-xl border border-border bg-muted/30 p-6">
           <h2 className="text-lg font-bold text-foreground">How to become a contributor</h2>
           <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-            If you want to contribute timelines to the public library, let's get in touch first. 
-            Send us your email address, and we will register it in our database so you can sign in using email and password.
+            If you want to contribute timelines to the public library, let's get in touch first.
+            Send us your email address, and we will register it in our database so you can sign in
+            using email and password.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Button asChild variant="outline" size="sm">
@@ -522,12 +568,14 @@ function ContributorPage() {
             <div className="mx-auto h-12 w-12 rounded-full bg-emerald-50 dark:bg-emerald-950 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-2">
               <CheckCircle2 className="h-6 w-6" />
             </div>
-            <DialogTitle className="text-center text-xl font-bold">Contribution Submitted!</DialogTitle>
+            <DialogTitle className="text-center text-xl font-bold">
+              Contribution Submitted!
+            </DialogTitle>
             <DialogDescription className="text-center mt-1">
               Your timeline "{submitResult?.timelineName}" has been submitted for review.
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="my-4 bg-muted/40 p-4 rounded-lg text-sm space-y-2.5">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Contributor:</span>
@@ -551,7 +599,11 @@ function ContributorPage() {
                 {submitResult?.simulated ? "View Mock Submission" : "View Submission on GitHub"}
               </a>
             </Button>
-            <Button variant="outline" onClick={() => setSuccessModalOpen(false)} className="w-full sm:w-auto">
+            <Button
+              variant="outline"
+              onClick={() => setSuccessModalOpen(false)}
+              className="w-full sm:w-auto"
+            >
               Close
             </Button>
           </DialogFooter>

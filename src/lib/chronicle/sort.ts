@@ -1,7 +1,11 @@
 import { Group, SortKey, Timeline, TimelineEvent, toDecimalYear } from "./types";
 
 /** Returns events sorted respecting group cohesion. */
-export function sortEvents(events: TimelineEvent[], groups: Group[], sort: SortKey): TimelineEvent[] {
+export function sortEvents(
+  events: TimelineEvent[],
+  groups: Group[],
+  sort: SortKey,
+): TimelineEvent[] {
   const ungrouped: TimelineEvent[] = [];
   const byGroup = new Map<string, TimelineEvent[]>();
   for (const e of events) {
@@ -14,14 +18,19 @@ export function sortEvents(events: TimelineEvent[], groups: Group[], sort: SortK
   }
 
   const cmpEvent = (a: TimelineEvent, b: TimelineEvent) => {
-    const aS = toDecimalYear(a.start), bS = toDecimalYear(b.start);
+    const aS = toDecimalYear(a.start),
+      bS = toDecimalYear(b.start);
     const aD = Math.abs(toDecimalYear(a.end) - aS);
     const bD = Math.abs(toDecimalYear(b.end) - bS);
     switch (sort) {
-      case "start-asc": return aS - bS;
-      case "start-desc": return bS - aS;
-      case "duration-asc": return aD - bD;
-      case "duration-desc": return bD - aD;
+      case "start-asc":
+        return aS - bS;
+      case "start-desc":
+        return bS - aS;
+      case "duration-asc":
+        return aD - bD;
+      case "duration-desc":
+        return bD - aD;
     }
   };
 
@@ -53,11 +62,11 @@ export function sortEvents(events: TimelineEvent[], groups: Group[], sort: SortK
   for (const bloc of groupBlocs) {
     while (
       ui < ungroupedSorted.length &&
-      ((sort.startsWith("start")
-        ? (desc
-            ? toDecimalYear(ungroupedSorted[ui].start) > bloc.sortVal
-            : toDecimalYear(ungroupedSorted[ui].start) < bloc.sortVal)
-        : false))
+      (sort.startsWith("start")
+        ? desc
+          ? toDecimalYear(ungroupedSorted[ui].start) > bloc.sortVal
+          : toDecimalYear(ungroupedSorted[ui].start) < bloc.sortVal
+        : false)
     ) {
       result.push(ungroupedSorted[ui++]);
     }

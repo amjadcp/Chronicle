@@ -2,7 +2,13 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { fetchPrebuiltTimeline } from "@/lib/chronicle/prebuilt";
 import { storage } from "@/lib/chronicle/storage";
-import { Timeline, TimelineEvent, SortKey, durationYears, formatEventDate } from "@/lib/chronicle/types";
+import {
+  Timeline,
+  TimelineEvent,
+  SortKey,
+  durationYears,
+  formatEventDate,
+} from "@/lib/chronicle/types";
 import { sortEvents } from "@/lib/chronicle/sort";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,7 +51,8 @@ export const Route = createFileRoute("/prebuilt/$file")({
       { title: "Community Timeline — HistoryTimeline" },
       {
         name: "description",
-        content: "View a community-contributed historical timeline from the HistoryTimeline public library.",
+        content:
+          "View a community-contributed historical timeline from the HistoryTimeline public library.",
       },
       { property: "og:title", content: "Community Timeline — HistoryTimeline" },
       { property: "og:description", content: "Explore a community historical timeline." },
@@ -88,7 +95,7 @@ function PrebuiltDetail() {
 
   const sorted = useMemo(
     () => (timeline ? sortEvents(timeline.events, timeline.groups, sort) : []),
-    [timeline, sort]
+    [timeline, sort],
   );
 
   const openEvent = timeline?.events.find((e) => e.id === openEventId) ?? null;
@@ -124,7 +131,12 @@ function PrebuiltDetail() {
       {/* Header Area with back button, Timeline Name, and Info button */}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
-          <Button asChild variant="ghost" size="sm" className="text-muted-foreground hover:bg-transparent -ml-2 shrink-0">
+          <Button
+            asChild
+            variant="ghost"
+            size="sm"
+            className="text-muted-foreground hover:bg-transparent -ml-2 shrink-0"
+          >
             <Link to="/timelines">
               <ArrowLeft className="mr-2 h-5 w-5" /> Back
             </Link>
@@ -260,9 +272,7 @@ function PrebuiltDetail() {
           aria-label="Events table"
         >
           <div className="mb-3">
-            <h3 className="text-lg font-semibold text-foreground">
-              Events ({sorted.length})
-            </h3>
+            <h3 className="text-lg font-semibold text-foreground">Events ({sorted.length})</h3>
           </div>
           {/* Read-only event table — no selection, no delete, no edit. Click notes icon to open notes modal. */}
           <ReadOnlyEventTable
@@ -305,11 +315,7 @@ function PrebuiltDetail() {
           <div className="space-y-4 py-2">
             <div className="space-y-1.5">
               <Label htmlFor="tl-name">Name</Label>
-              <Input
-                id="tl-name"
-                value={timeline.name}
-                readOnly
-              />
+              <Input id="tl-name" value={timeline.name} readOnly />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="tl-desc">Description</Label>
@@ -369,10 +375,11 @@ function ReadOnlyEventTable({
             const dur = durationYears(e.start, e.end);
             const group = groups.find((g) => g.id === e.groupId);
             return (
-              <tr key={e.id} className="border-t border-border align-middle hover:bg-surface/20 transition-colors">
-                <td className="min-w-[12rem] px-3 py-3 font-medium text-foreground">
-                  {e.name}
-                </td>
+              <tr
+                key={e.id}
+                className="border-t border-border align-middle hover:bg-surface/20 transition-colors"
+              >
+                <td className="min-w-[12rem] px-3 py-3 font-medium text-foreground">{e.name}</td>
                 <td className="px-3 py-3 text-foreground whitespace-nowrap">
                   {formatEventDate(e.start)}
                 </td>

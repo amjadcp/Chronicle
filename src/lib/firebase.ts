@@ -1,17 +1,17 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { 
-  getAuth, 
-  sendSignInLinkToEmail, 
-  isSignInWithEmailLink, 
-  signInWithEmailLink, 
-  User, 
+import {
+  getAuth,
+  sendSignInLinkToEmail,
+  isSignInWithEmailLink,
+  signInWithEmailLink,
+  User,
   onAuthStateChanged,
   signOut as fbSignOut,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   sendPasswordResetEmail,
   confirmPasswordReset,
-  verifyPasswordResetCode
+  verifyPasswordResetCode,
 } from "firebase/auth";
 
 // Public Firebase config from environment variables
@@ -55,7 +55,10 @@ export interface SimulatedUser {
 const createMockUser = (email: string): SimulatedUser => ({
   uid: "demo-contributor-" + btoa(email).substring(0, 8),
   email: email,
-  displayName: email.split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, c => c.toUpperCase()),
+  displayName: email
+    .split("@")[0]
+    .replace(/[._-]/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase()),
   photoURL: `https://api.dicebear.com/7.x/adventurer/svg?seed=${email}`,
   getIdToken: async () => "demo-mock-jwt-token-value",
 });
@@ -101,7 +104,12 @@ export async function sendMagicLink(email: string): Promise<void> {
       url: window.location.origin + "/contributor",
       handleCodeInApp: true,
     };
-    console.log("[Firebase Auth] Attempting to send real magic link to email:", email, "with action settings:", actionCodeSettings);
+    console.log(
+      "[Firebase Auth] Attempting to send real magic link to email:",
+      email,
+      "with action settings:",
+      actionCodeSettings,
+    );
     await sendSignInLinkToEmail(auth, email, actionCodeSettings);
     console.log("[Firebase Auth] Firebase reports email link successfully sent.");
     // Save email locally to complete login on return
@@ -110,7 +118,7 @@ export async function sendMagicLink(email: string): Promise<void> {
     // Simulation: save email and trigger a mock link redirect
     window.localStorage.setItem("emailForSignIn", email);
     console.log(`[Demo Mode] Simulated magic link email sent to: ${email}`);
-    
+
     // Simulate clicking the link from email by reloading with redirect param
     setTimeout(() => {
       window.location.search = "?mockSignIn=true";
@@ -132,7 +140,7 @@ export function isSignInLink(url: string): boolean {
 // Complete Sign-In with Email Link
 export async function signInWithLink(url: string): Promise<User | SimulatedUser | null> {
   let email = window.localStorage.getItem("emailForSignIn");
-  
+
   // Clear stored email
   window.localStorage.removeItem("emailForSignIn");
 
@@ -155,7 +163,7 @@ export async function signInWithLink(url: string): Promise<User | SimulatedUser 
     if (typeof window !== "undefined") {
       localStorage.setItem("chronicle:mock_user", "true");
       localStorage.setItem("chronicle:mock_user_email", email);
-      
+
       // Clean query params from URL
       window.history.replaceState({}, document.title, window.location.pathname);
     }
@@ -185,7 +193,10 @@ export function getCurrentUser(): User | SimulatedUser | null {
   return currentSimulatedUser;
 }
 
-export async function signInWithEmail(email: string, password: string): Promise<User | SimulatedUser | null> {
+export async function signInWithEmail(
+  email: string,
+  password: string,
+): Promise<User | SimulatedUser | null> {
   if (isFirebaseConfigured && auth) {
     const result = await signInWithEmailAndPassword(auth, email, password);
     return result.user;
@@ -201,7 +212,10 @@ export async function signInWithEmail(email: string, password: string): Promise<
   }
 }
 
-export async function signUpWithEmail(email: string, password: string): Promise<User | SimulatedUser | null> {
+export async function signUpWithEmail(
+  email: string,
+  password: string,
+): Promise<User | SimulatedUser | null> {
   if (isFirebaseConfigured && auth) {
     const result = await createUserWithEmailAndPassword(auth, email, password);
     return result.user;
@@ -246,9 +260,9 @@ export async function confirmResetPassword(code: string, newPassword: string): P
 
 export function getFriendlyAuthErrorMessage(error: any): string {
   if (!error) return "An unexpected error occurred. Please try again.";
-  
+
   const code = error.code || (typeof error === "string" ? error : "");
-  
+
   switch (code) {
     // Sign In errors
     case "auth/invalid-credential":
@@ -261,7 +275,7 @@ export function getFriendlyAuthErrorMessage(error: any): string {
       return "This account has been disabled. Please contact support.";
     case "auth/too-many-requests":
       return "Too many unsuccessful attempts. Access to this account has been temporarily disabled. Please try again later.";
-      
+
     // Sign Up/Validation errors
     case "auth/email-already-in-use":
       return "An account with this email address already exists.";
@@ -269,13 +283,13 @@ export function getFriendlyAuthErrorMessage(error: any): string {
       return "Please enter a valid email address.";
     case "auth/weak-password":
       return "Password is too weak. Please use a stronger password.";
-      
+
     // Password reset / code validation errors
     case "auth/expired-action-code":
       return "The password reset link has expired. Please request a new one.";
     case "auth/invalid-action-code":
       return "The password reset link is invalid. Please request a new one.";
-      
+
     default:
       // Fallback clean message without "Firebase:" prefix if possible
       const rawMessage = error.message || String(error);
@@ -285,7 +299,10 @@ export function getFriendlyAuthErrorMessage(error: any): string {
           const detail = match[0].replace("auth/", "").replace(/-/g, " ");
           return `Authentication error: ${detail.charAt(0).toUpperCase() + detail.slice(1)}.`;
         }
-        return rawMessage.replace(/Firebase:\s*Error\s*\([^)]*\)\.?/g, "").trim() || "Authentication failed.";
+        return (
+          rawMessage.replace(/Firebase:\s*Error\s*\([^)]*\)\.?/g, "").trim() ||
+          "Authentication failed."
+        );
       }
       return rawMessage;
   }

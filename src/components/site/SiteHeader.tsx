@@ -19,13 +19,25 @@ export function SiteHeader() {
           HistoryTimeline
         </Link>
         <nav aria-label="Primary" className="flex items-center gap-1">
-          <Link to="/timelines" className={linkBase} activeProps={{ className: `${linkBase} ${active}` }}>
+          <Link
+            to="/timelines"
+            className={linkBase}
+            activeProps={{ className: `${linkBase} ${active}` }}
+          >
             Timelines
           </Link>
-          <Link to="/contributor" className={linkBase} activeProps={{ className: `${linkBase} ${active}` }}>
+          <Link
+            to="/contributor"
+            className={linkBase}
+            activeProps={{ className: `${linkBase} ${active}` }}
+          >
             Contribute
           </Link>
-          <Link to="/about" className={linkBase} activeProps={{ className: `${linkBase} ${active}` }}>
+          <Link
+            to="/about"
+            className={linkBase}
+            activeProps={{ className: `${linkBase} ${active}` }}
+          >
             About
           </Link>
         </nav>

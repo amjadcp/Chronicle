@@ -11,11 +11,13 @@ export const Route = createFileRoute("/")({
         content:
           "Build interactive historical timelines. Create, organize, and visualize historical events across centuries with a clean, fast, offline-capable timeline editor.",
       },
-      { property: "og:title", content: "HistoryTimeline — Interactive Historical Timeline Builder" },
+      {
+        property: "og:title",
+        content: "HistoryTimeline — Interactive Historical Timeline Builder",
+      },
       {
         property: "og:description",
-        content:
-          "Create, organize, and visualize historical events through interactive timelines.",
+        content: "Create, organize, and visualize historical events through interactive timelines.",
       },
       { property: "og:url", content: "/" },
     ],
@@ -35,9 +37,10 @@ function Home() {
               History Timeline Creator for Students & Educators
             </h1>
             <p className="mt-5 max-w-2xl text-lg text-muted-foreground">
-              A simple, intuitive timeline builder to visualize historical events. Ideal for class projects, or self-study.
+              A simple, intuitive timeline builder to visualize historical events. Ideal for class
+              projects, or self-study.
             </p>
-              {/* A simple, intuitive timeline builder to visualize historical events. Ideal for class projects, self-study, or creating history content for social media and portfolios. */}
+            {/* A simple, intuitive timeline builder to visualize historical events. Ideal for class projects, self-study, or creating history content for social media and portfolios. */}
             <div className="mt-8 flex flex-wrap gap-3">
               <Button asChild size="lg">
                 <Link to="/timelines?tab=prebuilt">
@@ -60,13 +63,20 @@ function Home() {
           </h2>
           <div className="mt-4 space-y-4 text-base leading-relaxed text-muted-foreground">
             <p>
-              HistoryTimeline is an educational timeline tool designed specifically for learners and educators of history. Whether you are studying for a history class, preparing a presentation, or exploring your own historical interests, this tool helps you organize events chronologically with ease.
+              HistoryTimeline is an educational timeline tool designed specifically for learners and
+              educators of history. Whether you are studying for a history class, preparing a
+              presentation, or exploring your own historical interests, this tool helps you organize
+              events chronologically with ease.
             </p>
             <p>
-              You can create timelines covering any historical period, group events by eras, and export your work to share with others. It's a completely free history timeline maker that runs directly in your browser without requiring an account.
+              You can create timelines covering any historical period, group events by eras, and
+              export your work to share with others. It's a completely free history timeline maker
+              that runs directly in your browser without requiring an account.
             </p>
             <p>
-              Use this tool to map out ancient civilizations, track major world events, or create study guides. Dive into history, visualize the timeline of events, and enhance your historical learning journey today.
+              Use this tool to map out ancient civilizations, track major world events, or create
+              study guides. Dive into history, visualize the timeline of events, and enhance your
+              historical learning journey today.
             </p>
           </div>
         </div>
@@ -79,7 +89,9 @@ function Home() {
             Learn Together
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-base text-muted-foreground">
-            Explore a growing collection of prebuilt timelines created by fellow history learners and educators. If you would like to share your timelines with the community, you can apply to become a contributor.
+            Explore a growing collection of prebuilt timelines created by fellow history learners
+            and educators. If you would like to share your timelines with the community, you can
+            apply to become a contributor.
           </p>
           <div className="mt-6">
             <Button asChild>

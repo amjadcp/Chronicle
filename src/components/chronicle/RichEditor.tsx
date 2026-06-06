@@ -4,7 +4,14 @@ import Underline from "@tiptap/extension-underline";
 import Link from "@tiptap/extension-link";
 import { marked } from "marked";
 import TurndownService from "turndown";
-import { Bold, Heading2, Italic, Link as LinkIcon, List, Underline as UnderlineIcon } from "lucide-react";
+import {
+  Bold,
+  Heading2,
+  Italic,
+  Link as LinkIcon,
+  List,
+  Underline as UnderlineIcon,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEffect, useMemo } from "react";
 
@@ -24,11 +31,7 @@ export function RichEditor({ valueMarkdown, onChangeMarkdown }: Props) {
   );
 
   const editor = useEditor({
-    extensions: [
-      StarterKit,
-      Underline,
-      Link.configure({ openOnClick: false, autolink: true }),
-    ],
+    extensions: [StarterKit, Underline, Link.configure({ openOnClick: false, autolink: true })],
     content: initialHTML,
     editorProps: { attributes: { class: "tiptap prose prose-sm max-w-none focus:outline-none" } },
     onUpdate: ({ editor }) => {
@@ -49,32 +52,56 @@ export function RichEditor({ valueMarkdown, onChangeMarkdown }: Props) {
   return (
     <div className="rounded-md border border-border bg-background">
       <div className="flex flex-wrap items-center gap-1 border-b border-border px-2 py-1.5">
-        <button type="button" aria-label="Bold" className={btn(editor.isActive("bold"))}
-          onClick={() => editor.chain().focus().toggleBold().run()}>
+        <button
+          type="button"
+          aria-label="Bold"
+          className={btn(editor.isActive("bold"))}
+          onClick={() => editor.chain().focus().toggleBold().run()}
+        >
           <Bold className="h-4 w-4" />
         </button>
-        <button type="button" aria-label="Italic" className={btn(editor.isActive("italic"))}
-          onClick={() => editor.chain().focus().toggleItalic().run()}>
+        <button
+          type="button"
+          aria-label="Italic"
+          className={btn(editor.isActive("italic"))}
+          onClick={() => editor.chain().focus().toggleItalic().run()}
+        >
           <Italic className="h-4 w-4" />
         </button>
-        <button type="button" aria-label="Underline" className={btn(editor.isActive("underline"))}
-          onClick={() => editor.chain().focus().toggleUnderline().run()}>
+        <button
+          type="button"
+          aria-label="Underline"
+          className={btn(editor.isActive("underline"))}
+          onClick={() => editor.chain().focus().toggleUnderline().run()}
+        >
           <UnderlineIcon className="h-4 w-4" />
         </button>
-        <button type="button" aria-label="Heading" className={btn(editor.isActive("heading", { level: 2 }))}
-          onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}>
+        <button
+          type="button"
+          aria-label="Heading"
+          className={btn(editor.isActive("heading", { level: 2 }))}
+          onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+        >
           <Heading2 className="h-4 w-4" />
         </button>
-        <button type="button" aria-label="Bulleted list" className={btn(editor.isActive("bulletList"))}
-          onClick={() => editor.chain().focus().toggleBulletList().run()}>
+        <button
+          type="button"
+          aria-label="Bulleted list"
+          className={btn(editor.isActive("bulletList"))}
+          onClick={() => editor.chain().focus().toggleBulletList().run()}
+        >
           <List className="h-4 w-4" />
         </button>
-        <button type="button" aria-label="Link" className={btn(editor.isActive("link"))}
+        <button
+          type="button"
+          aria-label="Link"
+          className={btn(editor.isActive("link"))}
           onClick={() => {
             const url = window.prompt("URL");
             if (url) editor.chain().focus().setLink({ href: url }).run();
             else editor.chain().focus().unsetLink().run();
-          }}>
+          }}
+        >
           <LinkIcon className="h-4 w-4" />
         </button>
         <div className="ml-auto">

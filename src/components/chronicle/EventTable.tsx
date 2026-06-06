@@ -15,7 +15,16 @@ interface Props {
 }
 
 export function EventTable(props: Props) {
-  const { events, groups, selected, onToggleSelected, onToggleSelectAll, onDelete, onEditDetails, onOpenNotes } = props;
+  const {
+    events,
+    groups,
+    selected,
+    onToggleSelected,
+    onToggleSelectAll,
+    onDelete,
+    onEditDetails,
+    onOpenNotes,
+  } = props;
 
   const allSelected = events.length > 0 && events.every((e) => selected.has(e.id));
 
@@ -91,15 +100,11 @@ function EventRow({
       <td className="px-3 py-2">
         <Checkbox checked={selected} onCheckedChange={onToggleSelected} aria-label="Select row" />
       </td>
-      <td className="min-w-[12rem] px-3 py-3 font-medium text-foreground">
-        {event.name}
-      </td>
+      <td className="min-w-[12rem] px-3 py-3 font-medium text-foreground">{event.name}</td>
       <td className="px-3 py-3 text-foreground whitespace-nowrap">
         {formatEventDate(event.start)}
       </td>
-      <td className="px-3 py-3 text-foreground whitespace-nowrap">
-        {formatEventDate(event.end)}
-      </td>
+      <td className="px-3 py-3 text-foreground whitespace-nowrap">{formatEventDate(event.end)}</td>
       <td className="px-3 py-3 text-muted-foreground whitespace-nowrap">
         {dur.toFixed(dur < 10 ? 1 : 0)} yr
       </td>
@@ -115,13 +120,31 @@ function EventRow({
       </td>
       <td className="px-3 py-3">
         <div className="flex items-center justify-end gap-1">
-          <Button size="icon" variant="ghost" aria-label="Open notes & resources" onClick={onOpenNotes} title="Notes & Resources">
+          <Button
+            size="icon"
+            variant="ghost"
+            aria-label="Open notes & resources"
+            onClick={onOpenNotes}
+            title="Notes & Resources"
+          >
             <FileText className="h-4 w-4" />
           </Button>
-          <Button size="icon" variant="ghost" aria-label="Edit event details" onClick={onEditDetails} title="Edit Details">
+          <Button
+            size="icon"
+            variant="ghost"
+            aria-label="Edit event details"
+            onClick={onEditDetails}
+            title="Edit Details"
+          >
             <Pencil className="h-4 w-4" />
           </Button>
-          <Button size="icon" variant="ghost" aria-label="Delete event" onClick={onDelete} title="Delete Event">
+          <Button
+            size="icon"
+            variant="ghost"
+            aria-label="Delete event"
+            onClick={onDelete}
+            title="Delete Event"
+          >
             <Trash2 className="h-4 w-4 text-destructive" />
           </Button>
         </div>

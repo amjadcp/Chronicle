@@ -4,7 +4,10 @@ import process from "node:process";
 import { TimelineSchema } from "../chronicle/types";
 
 // Firebase Token Verification Helper (works on edge runtimes like Cloudflare Workers)
-async function verifyFirebaseToken(idToken: string, projectId: string): Promise<{ uid: string; email?: string; name?: string }> {
+async function verifyFirebaseToken(
+  idToken: string,
+  projectId: string,
+): Promise<{ uid: string; email?: string; name?: string }> {
   // If it's the mock token and we're in demo mode, return mock payload
   if (idToken === "demo-mock-jwt-token-value") {
     return {
@@ -48,7 +51,9 @@ async function verifyFirebaseToken(idToken: string, projectId: string): Promise<
       throw new Error("Token header missing kid");
     }
 
-    const certsRes = await fetch("https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com");
+    const certsRes = await fetch(
+      "https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com",
+    );
     if (certsRes.ok) {
       const certs = await certsRes.json();
       const x509Cert = certs[kid];
@@ -76,7 +81,7 @@ async function verifyFirebaseToken(idToken: string, projectId: string): Promise<
 // GitHub Sync Helper (commits timeline JSON directly to the default branch)
 async function submitToGithub(
   timeline: any,
-  contributorName: string
+  contributorName: string,
 ): Promise<{ success: boolean; url: string; simulated: boolean; message: string }> {
   // Read GitHub credentials from environment
   const githubToken = process.env.GITHUB_TOKEN;
@@ -90,13 +95,16 @@ async function submitToGithub(
       success: true,
       simulated: true,
       url: `https://github.com/${repoOwner}/${repoName}/blob/main/timelines/${timeline.id}.json`,
-      message: "GitHub credentials not configured. Timeline was successfully validated, and a simulated commit was generated.",
+      message:
+        "GitHub credentials not configured. Timeline was successfully validated, and a simulated commit was generated.",
     };
   }
 
   try {
     const sanitizedName = timeline.name.replace(/[^a-z0-9-_]+/gi, "-").toLowerCase() || "untitled";
-    const idSuffix = timeline.id.includes("-") ? timeline.id.split("-")[0] : timeline.id.substring(0, 8);
+    const idSuffix = timeline.id.includes("-")
+      ? timeline.id.split("-")[0]
+      : timeline.id.substring(0, 8);
     const filename = `timelines/${sanitizedName}-${idSuffix}.json`;
     const commitMessage = `Add/Update timeline "${timeline.name}" by contributor ${contributorName}`;
 
@@ -108,7 +116,9 @@ async function submitToGithub(
     };
 
     // 1. Get the default branch (usually main or master)
-    const repoRes = await fetch(`https://api.github.com/repos/${githubRepo}`, { headers: authHeader });
+    const repoRes = await fetch(`https://api.github.com/repos/${githubRepo}`, {
+      headers: authHeader,
+    });
     if (!repoRes.ok) {
       throw new Error(`Failed to fetch repo info: ${repoRes.statusText}`);
     }
@@ -117,7 +127,10 @@ async function submitToGithub(
 
     // 2. Check if file already exists on the default branch to get its SHA (for update)
     let fileSha: string | undefined;
-    const fileRes = await fetch(`https://api.github.com/repos/${githubRepo}/contents/${filename}?ref=${defaultBranch}`, { headers: authHeader });
+    const fileRes = await fetch(
+      `https://api.github.com/repos/${githubRepo}/contents/${filename}?ref=${defaultBranch}`,
+      { headers: authHeader },
+    );
     if (fileRes.ok) {
       const fileData = await fileRes.json();
       fileSha = fileData.sha;
@@ -125,17 +138,20 @@ async function submitToGithub(
 
     // 3. Put the timeline JSON content directly on the default branch
     const contentPayload = btoa(unescape(encodeURIComponent(JSON.stringify(timeline, null, 2))));
-    
-    const putFileRes = await fetch(`https://api.github.com/repos/${githubRepo}/contents/${filename}`, {
-      method: "PUT",
-      headers: authHeader,
-      body: JSON.stringify({
-        message: commitMessage,
-        content: contentPayload,
-        branch: defaultBranch,
-        sha: fileSha,
-      }),
-    });
+
+    const putFileRes = await fetch(
+      `https://api.github.com/repos/${githubRepo}/contents/${filename}`,
+      {
+        method: "PUT",
+        headers: authHeader,
+        body: JSON.stringify({
+          message: commitMessage,
+          content: contentPayload,
+          branch: defaultBranch,
+          sha: fileSha,
+        }),
+      },
+    );
 
     if (!putFileRes.ok) {
       throw new Error(`Failed to commit timeline JSON: ${putFileRes.statusText}`);
@@ -159,7 +175,7 @@ export const submitTimeline = createServerFn({ method: "POST" })
     z.object({
       idToken: z.string().min(1),
       timeline: TimelineSchema,
-    })
+    }),
   )
   .handler(async ({ data }) => {
     // 1. Get Firebase project ID

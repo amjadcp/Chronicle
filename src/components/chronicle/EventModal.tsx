@@ -1,10 +1,22 @@
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Group,
   Resource,
@@ -17,7 +29,16 @@ import {
   applyEra,
 } from "@/lib/chronicle/types";
 import { RichEditor } from "./RichEditor";
-import { ImageIcon, Link as LinkIcon, Star, Trash2, Youtube, Plus, ExternalLink, Lock } from "lucide-react";
+import {
+  ImageIcon,
+  Link as LinkIcon,
+  Star,
+  Trash2,
+  Youtube,
+  Plus,
+  ExternalLink,
+  Lock,
+} from "lucide-react";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 
@@ -112,7 +133,12 @@ export function EventModal({ open, event, onClose, onSave, readOnly = false }: E
   };
 
   return (
-    <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        if (!o) onClose();
+      }}
+    >
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="truncate flex items-center gap-2">
@@ -163,27 +189,34 @@ export function EventModal({ open, event, onClose, onSave, readOnly = false }: E
             <div className="space-y-2.5">
               {resources.length === 0 && (
                 <p className="rounded-md border border-dashed border-border bg-surface p-4 text-center text-sm text-muted-foreground">
-                  {readOnly ? "No resources attached to this event." : 'No resources yet. Click "Add Link" to attach a website, image, or YouTube link.'}
+                  {readOnly
+                    ? "No resources attached to this event."
+                    : 'No resources yet. Click "Add Link" to attach a website, image, or YouTube link.'}
                 </p>
               )}
               {resources.map((r) => {
                 const Icon = ICONS[r.type];
                 const isIcon = iconResourceId === r.id;
                 return (
-                  <div key={r.id} className="relative flex items-center justify-between rounded-lg border border-border bg-card p-3 transition-colors hover:bg-surface/30">
+                  <div
+                    key={r.id}
+                    className="relative flex items-center justify-between rounded-lg border border-border bg-card p-3 transition-colors hover:bg-surface/30"
+                  >
                     <a
                       href={r.url.startsWith("http") ? r.url : `https://${r.url}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex flex-1 items-center gap-3 min-w-0 mr-4"
                     >
-                      <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
-                        r.type === "youtube"
-                          ? "bg-red-100 text-red-600 dark:bg-red-950/30 dark:text-red-400"
-                          : r.type === "image"
-                          ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400"
-                          : "bg-blue-100 text-blue-600 dark:bg-blue-950/30 dark:text-blue-400"
-                      }`}>
+                      <div
+                        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
+                          r.type === "youtube"
+                            ? "bg-red-100 text-red-600 dark:bg-red-950/30 dark:text-red-400"
+                            : r.type === "image"
+                              ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400"
+                              : "bg-blue-100 text-blue-600 dark:bg-blue-950/30 dark:text-blue-400"
+                        }`}
+                      >
                         <Icon className="h-5 w-5" />
                       </div>
                       <div className="min-w-0 flex-1">
@@ -225,13 +258,15 @@ export function EventModal({ open, event, onClose, onSave, readOnly = false }: E
             </div>
 
             {/* Add link form — hidden in read-only mode */}
-            {!readOnly && (
-              showAddForm ? (
+            {!readOnly &&
+              (showAddForm ? (
                 <div className="space-y-3 rounded-lg border border-border bg-surface/40 p-3 animate-in fade-in slide-in-from-top-2 duration-200">
                   <div className="text-xs font-semibold text-foreground">Add new resource link</div>
                   <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
                     <div className="space-y-1">
-                      <Label htmlFor="res-type" className="text-[11px] text-muted-foreground">Type</Label>
+                      <Label htmlFor="res-type" className="text-[11px] text-muted-foreground">
+                        Type
+                      </Label>
                       <Select value={newType} onValueChange={(v) => setNewType(v as ResourceType)}>
                         <SelectTrigger id="res-type" className="h-8 text-xs bg-background">
                           <SelectValue />
@@ -244,7 +279,9 @@ export function EventModal({ open, event, onClose, onSave, readOnly = false }: E
                       </Select>
                     </div>
                     <div className="space-y-1">
-                      <Label htmlFor="res-label" className="text-[11px] text-muted-foreground">Title (Optional)</Label>
+                      <Label htmlFor="res-label" className="text-[11px] text-muted-foreground">
+                        Title (Optional)
+                      </Label>
                       <Input
                         id="res-label"
                         placeholder="e.g. Wikipedia page"
@@ -254,7 +291,9 @@ export function EventModal({ open, event, onClose, onSave, readOnly = false }: E
                       />
                     </div>
                     <div className="space-y-1 sm:col-span-2">
-                      <Label htmlFor="res-url" className="text-[11px] text-muted-foreground">URL *</Label>
+                      <Label htmlFor="res-url" className="text-[11px] text-muted-foreground">
+                        URL *
+                      </Label>
                       <Input
                         id="res-url"
                         placeholder="e.g. https://wikipedia.org/..."
@@ -265,38 +304,63 @@ export function EventModal({ open, event, onClose, onSave, readOnly = false }: E
                     </div>
                   </div>
                   <div className="flex justify-end gap-2 mt-2">
-                    <Button type="button" variant="outline" size="sm" className="h-8 text-xs" onClick={() => setShowAddForm(false)}>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-8 text-xs"
+                      onClick={() => setShowAddForm(false)}
+                    >
                       Cancel
                     </Button>
-                    <Button type="button" size="sm" className="h-8 text-xs" onClick={handleAddResource} disabled={!newUrl.trim()}>
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="h-8 text-xs"
+                      onClick={handleAddResource}
+                      disabled={!newUrl.trim()}
+                    >
                       Add Link
                     </Button>
                   </div>
                 </div>
               ) : (
-                <Button type="button" variant="outline" size="sm" className="w-full border-dashed" onClick={() => setShowAddForm(true)}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="w-full border-dashed"
+                  onClick={() => setShowAddForm(true)}
+                >
                   <Plus className="mr-1.5 h-4 w-4" /> Add Link / Resource
                 </Button>
-              )
-            )}
+              ))}
           </TabsContent>
         </Tabs>
 
         {/* Save button — hidden in read-only mode */}
         {!readOnly && activeTab === "notes" && (
           <DialogFooter className="mt-6">
-            <Button variant="outline" onClick={onClose}>Cancel</Button>
-            <Button onClick={() => {
-              onSave({ notesMarkdown: notes });
-              onClose();
-            }}>Save Changes</Button>
+            <Button variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                onSave({ notesMarkdown: notes });
+                onClose();
+              }}
+            >
+              Save Changes
+            </Button>
           </DialogFooter>
         )}
 
         {/* Read-only close button */}
         {readOnly && (
           <DialogFooter className="mt-6">
-            <Button variant="outline" onClick={onClose}>Close</Button>
+            <Button variant="outline" onClick={onClose}>
+              Close
+            </Button>
           </DialogFooter>
         )}
       </DialogContent>
@@ -381,19 +445,30 @@ export function EventDetailsModal({
     });
     toast.success(`Added event "${name.trim()}"`);
 
-    // Reset fields for a clean form
+    // Reset fields for a clean form, preserving group and era
     setName("");
-    setStart({ year: 0 });
-    setEnd({ year: 0 });
-    setGroupId(null);
+    const startEra = start.year < 0 || Object.is(start.year, -0) ? "BC" : "AD";
+    const endEra = end.year < 0 || Object.is(end.year, -0) ? "BC" : "AD";
+    setStart({ year: startEra === "BC" ? -0 : 0 });
+    setEnd({ year: endEra === "BC" ? -0 : 0 });
+    // groupId is intentionally not reset
   };
 
   return (
-    <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        if (!o) onClose();
+      }}
+    >
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>
-            {isAdd ? "Add New Event" : event ? `Edit Event Details: ${event.name}` : "Edit Event Details"}
+            {isAdd
+              ? "Add New Event"
+              : event
+                ? `Edit Event Details: ${event.name}`
+                : "Edit Event Details"}
           </DialogTitle>
         </DialogHeader>
 
@@ -435,7 +510,9 @@ export function EventDetailsModal({
             label={
               <>
                 <span>Start Date *</span>
-                <span className="text-[11px] font-normal text-muted-foreground">(Year is required, Month/Day optional)</span>
+                <span className="text-[11px] font-normal text-muted-foreground">
+                  (Year is required, Month/Day optional)
+                </span>
               </>
             }
             value={start}
@@ -446,7 +523,9 @@ export function EventDetailsModal({
             label={
               <>
                 <span>End Date (Optional)</span>
-                <span className="text-[11px] font-normal text-muted-foreground">(Year is required, Month/Day optional)</span>
+                <span className="text-[11px] font-normal text-muted-foreground">
+                  (Year is required, Month/Day optional)
+                </span>
               </>
             }
             value={end}
@@ -459,11 +538,7 @@ export function EventDetailsModal({
             Cancel
           </Button>
           {isAdd && onSaveAndAddAnother && (
-            <Button
-              variant="secondary"
-              onClick={handleSaveAndAddAnother}
-              disabled={!isValid}
-            >
+            <Button variant="secondary" onClick={handleSaveAndAddAnother} disabled={!isValid}>
               <Plus className="mr-2 h-4 w-4" /> Save & Add Another
             </Button>
           )}
@@ -485,7 +560,8 @@ function DateFields({
   value: EventDate;
   onChange: (d: EventDate) => void;
 }) {
-  const era: Era = eraOf(value.year || 1);
+  const isNegativeZero = Object.is(value.year, -0);
+  const era: Era = value.year < 0 || isNegativeZero ? "BC" : "AD";
   const yearAbs = Math.abs(value.year || 0) || "";
 
   return (
@@ -501,7 +577,7 @@ function DateFields({
           onChange={(e) => {
             const val = e.target.value.replace(/\D/g, "");
             const n = val ? Number(val) : 0;
-            onChange({ ...value, year: applyEra(n, era) });
+            onChange({ ...value, year: era === "BC" ? -n : n });
           }}
         />
         <Input
@@ -530,9 +606,10 @@ function DateFields({
         />
         <Select
           value={era}
-          onValueChange={(v) =>
-            onChange({ ...value, year: applyEra(Math.abs(value.year || 1), v as Era) })
-          }
+          onValueChange={(v) => {
+            const n = Math.abs(value.year || 0);
+            onChange({ ...value, year: v === "BC" ? -n : n });
+          }}
         >
           <SelectTrigger className="w-20 h-9">
             <SelectValue />

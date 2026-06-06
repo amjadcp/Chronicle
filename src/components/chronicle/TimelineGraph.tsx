@@ -21,7 +21,11 @@ function assignLanes(
   events: TimelineEvent[],
   groups: Group[],
   singleRowPerGroup: boolean,
-): { items: LaidOut[]; laneCount: number; groupLanes: Map<string, { start: number; end: number }> } {
+): {
+  items: LaidOut[];
+  laneCount: number;
+  groupLanes: Map<string, { start: number; end: number }>;
+} {
   const groupLanes = new Map<string, { start: number; end: number }>();
   const items: LaidOut[] = [];
   let nextLane = 0;
@@ -69,9 +73,7 @@ function assignLanes(
   // Ungrouped — pack into their own lanes
   const ungrouped = events.filter((e) => !e.groupId);
   const laneEnds: number[] = [];
-  for (const e of [...ungrouped].sort(
-    (a, b) => toDecimalYear(a.start) - toDecimalYear(b.start),
-  )) {
+  for (const e of [...ungrouped].sort((a, b) => toDecimalYear(a.start) - toDecimalYear(b.start))) {
     const { startYear, endYear } = computeRange(e);
     let laneIdx = laneEnds.findIndex((endY) => endY <= startYear);
     if (laneIdx === -1) {
@@ -113,12 +115,16 @@ export function TimelineGraph({ events, groups, singleRowPerGroup, onEventClick 
 
   const { minYear, maxYear } = useMemo(() => {
     if (items.length === 0) return { minYear: 0, maxYear: 100 };
-    let mn = Infinity, mx = -Infinity;
+    let mn = Infinity,
+      mx = -Infinity;
     for (const it of items) {
       if (it.startYear < mn) mn = it.startYear;
       if (it.endYear > mx) mx = it.endYear;
     }
-    if (mn === mx) { mn -= 5; mx += 5; }
+    if (mn === mx) {
+      mn -= 5;
+      mx += 5;
+    }
     const pad = (mx - mn) * 0.05;
     return { minYear: mn - pad, maxYear: mx + pad };
   }, [items]);
@@ -200,7 +206,10 @@ export function TimelineGraph({ events, groups, singleRowPerGroup, onEventClick 
   const groupColorMap = new Map(groups.map((g) => [g.id, g.color]));
 
   return (
-    <div ref={wrapRef} className="w-full select-none overflow-hidden rounded-lg border border-border bg-card">
+    <div
+      ref={wrapRef}
+      className="w-full select-none overflow-hidden rounded-lg border border-border bg-card"
+    >
       <div className="flex items-center justify-between gap-2 border-b border-border bg-surface px-3 py-2 text-xs text-muted-foreground">
         <div>
           {formatYearLabel(view.min)} → {formatYearLabel(view.max)}
@@ -215,7 +224,9 @@ export function TimelineGraph({ events, groups, singleRowPerGroup, onEventClick 
               setView({ min: c - span * 0.4, max: c + span * 0.4 });
             }}
             aria-label="Zoom in"
-          >+</button>
+          >
+            +
+          </button>
           <button
             type="button"
             className="rounded-md border border-border bg-background px-2 py-1 hover:bg-accent"
@@ -225,12 +236,16 @@ export function TimelineGraph({ events, groups, singleRowPerGroup, onEventClick 
               setView({ min: c - span * 0.625, max: c + span * 0.625 });
             }}
             aria-label="Zoom out"
-          >−</button>
+          >
+            −
+          </button>
           <button
             type="button"
             className="rounded-md border border-border bg-background px-2 py-1 hover:bg-accent"
             onClick={() => setView({ min: minYear, max: maxYear })}
-          >Fit</button>
+          >
+            Fit
+          </button>
         </div>
       </div>
 
@@ -257,15 +272,7 @@ export function TimelineGraph({ events, groups, singleRowPerGroup, onEventClick 
             const y = AXIS_H + range.start * (LANE_H + LANE_GAP) - 2;
             const h = (range.end - range.start + 1) * (LANE_H + LANE_GAP);
             return (
-              <rect
-                key={gid}
-                x={0}
-                y={y}
-                width={width}
-                height={h}
-                fill={color}
-                opacity={0.08}
-              />
+              <rect key={gid} x={0} y={y} width={width} height={h} fill={color} opacity={0.08} />
             );
           })}
 
@@ -299,7 +306,7 @@ export function TimelineGraph({ events, groups, singleRowPerGroup, onEventClick 
             const x2 = yearToX(it.endYear);
             const w = Math.max(4, x2 - x1);
             const y = AXIS_H + it.lane * (LANE_H + LANE_GAP) + 2;
-            const color = it.groupId ? groupColorMap.get(it.groupId) ?? "#2563EB" : "#2563EB";
+            const color = it.groupId ? (groupColorMap.get(it.groupId) ?? "#2563EB") : "#2563EB";
             const hasIcon = !!it.event.iconResourceId;
             return (
               <g
@@ -319,7 +326,12 @@ export function TimelineGraph({ events, groups, singleRowPerGroup, onEventClick 
                   fillOpacity={0.9}
                   stroke={color}
                 />
-                <foreignObject x={x1 + 6} y={y + 3} width={Math.max(0, w - 12)} height={LANE_H - 10}>
+                <foreignObject
+                  x={x1 + 6}
+                  y={y + 3}
+                  width={Math.max(0, w - 12)}
+                  height={LANE_H - 10}
+                >
                   <div
                     style={{
                       fontSize: 12,
@@ -334,12 +346,17 @@ export function TimelineGraph({ events, groups, singleRowPerGroup, onEventClick 
                       height: "100%",
                     }}
                   >
-                    {hasIcon && <span aria-hidden style={{ opacity: 0.9 }}>★</span>}
+                    {hasIcon && (
+                      <span aria-hidden style={{ opacity: 0.9 }}>
+                        ★
+                      </span>
+                    )}
                     <span>{it.event.name || "(untitled)"}</span>
                   </div>
                 </foreignObject>
                 <title>
-                  {it.event.name}: {formatEventDate(it.event.start)} – {formatEventDate(it.event.end)}
+                  {it.event.name}: {formatEventDate(it.event.start)} –{" "}
+                  {formatEventDate(it.event.end)}
                 </title>
               </g>
             );

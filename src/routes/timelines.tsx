@@ -126,8 +126,6 @@ function TimelinesPage() {
     reader.readAsText(file);
   }
 
-
-
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
       <div className="flex flex-wrap items-end justify-between gap-4">
@@ -160,7 +158,13 @@ function TimelinesPage() {
         </div>
       </div>
 
-      <Tabs value={tab} onValueChange={(val) => navigate({ search: { tab: val as "mine" | "prebuilt" }, replace: true })} className="mt-8">
+      <Tabs
+        value={tab}
+        onValueChange={(val) =>
+          navigate({ search: { tab: val as "mine" | "prebuilt" }, replace: true })
+        }
+        className="mt-8"
+      >
         <TabsList>
           <TabsTrigger value="mine">My Timelines</TabsTrigger>
           <TabsTrigger value="prebuilt">Prebuilt Timelines</TabsTrigger>
@@ -171,7 +175,9 @@ function TimelinesPage() {
             <Info className="h-4 w-4" />
             <AlertTitle>Browser Storage Notice</AlertTitle>
             <AlertDescription>
-              Timelines you create are stored locally in your browser. Clearing your website cache or data will permanently delete them. Please remember to export your timelines regularly.
+              Timelines you create are stored locally in your browser. Clearing your website cache
+              or data will permanently delete them. Please remember to export your timelines
+              regularly.
             </AlertDescription>
           </Alert>
           {myTimelines.length === 0 ? (
@@ -208,7 +214,9 @@ function TimelinesPage() {
                   </div>
                   <div className="flex flex-wrap gap-1">
                     <Button asChild size="sm" variant="default">
-                      <Link to="/timeline/$id" params={{ id: t.id }}>Open</Link>
+                      <Link to="/timeline/$id" params={{ id: t.id }}>
+                        Open
+                      </Link>
                     </Button>
                     <Button
                       size="sm"
@@ -271,10 +279,15 @@ function TimelinesPage() {
               title="Community library is empty"
               body={
                 <>
-                  No timelines were found in the public repository yet. Configure the source repo
-                  in <code className="rounded bg-muted px-1">src/lib/chronicle/prebuilt.ts</code>{" "}
-                  or visit the{" "}
-                  <a className="text-primary underline" href={PREBUILT_BASE} target="_blank" rel="noreferrer">
+                  No timelines were found in the public repository yet. Configure the source repo in{" "}
+                  <code className="rounded bg-muted px-1">src/lib/chronicle/prebuilt.ts</code> or
+                  visit the{" "}
+                  <a
+                    className="text-primary underline"
+                    href={PREBUILT_BASE}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
                     repository
                   </a>{" "}
                   to add one.
@@ -288,7 +301,9 @@ function TimelinesPage() {
                   <div>
                     <div className="truncate text-base font-semibold text-foreground">{p.name}</div>
                     {p.description && (
-                      <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{p.description}</p>
+                      <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
+                        {p.description}
+                      </p>
                     )}
                     <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
                       <span className="inline-flex items-center gap-1">
@@ -296,7 +311,9 @@ function TimelinesPage() {
                         {p.contributor || "Community"}
                       </span>
                       <span>{p.eventCount} events</span>
-                      {p.updatedAt && <span>Updated {new Date(p.updatedAt).toLocaleDateString()}</span>}
+                      {p.updatedAt && (
+                        <span>Updated {new Date(p.updatedAt).toLocaleDateString()}</span>
+                      )}
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-1">

@@ -96,7 +96,7 @@ export function toDecimalYear(d: EventDate): number {
   const m = d.month ?? 1;
   const day = d.day ?? 1;
   // approximate
-  return d.year + ((m - 1) / 12) + ((day - 1) / 365);
+  return d.year + (m - 1) / 12 + (day - 1) / 365;
 }
 
 export function durationYears(start: EventDate, end: EventDate): number {
