@@ -5,7 +5,7 @@
   # Build command
   command = "npm run build"
   # Client-side static assets served by Netlify CDN
-  publish = "dist/client"
+  publish = "dist"
 
 [build.environment]
   # Ensure Node 20 (LTS) is used for the build
