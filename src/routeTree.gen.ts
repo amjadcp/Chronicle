@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TimelinesRouteImport } from './routes/timelines'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ContributorRouteImport } from './routes/contributor'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
@@ -19,6 +20,11 @@ import { Route as PrebuiltFileRouteImport } from './routes/prebuilt.$file'
 const TimelinesRoute = TimelinesRouteImport.update({
   id: '/timelines',
   path: '/timelines',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContributorRoute = ContributorRouteImport.update({
@@ -51,6 +57,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/contributor': typeof ContributorRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/timelines': typeof TimelinesRoute
   '/prebuilt/$file': typeof PrebuiltFileRoute
   '/timeline/$id': typeof TimelineIdRoute
@@ -59,6 +66,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/contributor': typeof ContributorRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/timelines': typeof TimelinesRoute
   '/prebuilt/$file': typeof PrebuiltFileRoute
   '/timeline/$id': typeof TimelineIdRoute
@@ -68,6 +76,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/contributor': typeof ContributorRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/timelines': typeof TimelinesRoute
   '/prebuilt/$file': typeof PrebuiltFileRoute
   '/timeline/$id': typeof TimelineIdRoute
@@ -78,6 +87,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/contributor'
+    | '/reset-password'
     | '/timelines'
     | '/prebuilt/$file'
     | '/timeline/$id'
@@ -86,6 +96,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/contributor'
+    | '/reset-password'
     | '/timelines'
     | '/prebuilt/$file'
     | '/timeline/$id'
@@ -94,6 +105,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/contributor'
+    | '/reset-password'
     | '/timelines'
     | '/prebuilt/$file'
     | '/timeline/$id'
@@ -103,6 +115,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
   ContributorRoute: typeof ContributorRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   TimelinesRoute: typeof TimelinesRoute
   PrebuiltFileRoute: typeof PrebuiltFileRoute
   TimelineIdRoute: typeof TimelineIdRoute
@@ -115,6 +128,13 @@ declare module '@tanstack/react-router' {
       path: '/timelines'
       fullPath: '/timelines'
       preLoaderRoute: typeof TimelinesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/contributor': {
@@ -159,6 +179,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   ContributorRoute: ContributorRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   TimelinesRoute: TimelinesRoute,
   PrebuiltFileRoute: PrebuiltFileRoute,
   TimelineIdRoute: TimelineIdRoute,

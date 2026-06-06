@@ -33,12 +33,12 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   subscribeAuth,
-  sendMagicLink,
-  isSignInLink,
-  signInWithLink,
   signOutUser,
   isFirebaseConfigured,
   SimulatedUser,
+  signInWithEmail,
+  sendPasswordReset,
+  getFriendlyAuthErrorMessage,
 } from "@/lib/firebase";
 import { storage } from "@/lib/chronicle/storage";
 import { Timeline } from "@/lib/chronicle/types";
@@ -67,10 +67,14 @@ export const Route = createFileRoute("/contributor")({
 function ContributorPage() {
   const [user, setUser] = useState<User | SimulatedUser | null>(null);
   const [loading, setLoading] = useState(true);
+  
+  // Auth Form State
+  const [authMode, setAuthMode] = useState<"login" | "forgot">("login");
   const [emailInput, setEmailInput] = useState("");
-  const [linkSent, setLinkSent] = useState(false);
-  const [sendingLink, setSendingLink] = useState(false);
-  const [completingSignIn, setCompletingSignIn] = useState(false);
+  const [passwordInput, setPasswordInput] = useState("");
+  const [signingIn, setSigningIn] = useState(false);
+  const [forgotSent, setForgotSent] = useState(false);
+
   const [submittingId, setSubmittingId] = useState<string | null>(null);
   const [myTimelines, setMyTimelines] = useState<Timeline[]>([]);
   // Bump this counter to force sync-status badges to re-render after a push
@@ -96,56 +100,41 @@ function ContributorPage() {
     // 2. Load my timelines
     setMyTimelines(storage.list());
 
-    // 3. Check if we landed back from an email sign-in link
-    const currentUrl = window.location.href;
-    if (isSignInLink(currentUrl)) {
-      handleCompleteSignIn(currentUrl);
-    }
-
     return () => {
       unsubscribe();
     };
   }, []);
 
-  async function handleCompleteSignIn(url: string) {
-    try {
-      setCompletingSignIn(true);
-      setLoading(true);
-      const u = await signInWithLink(url);
-      if (u) {
-        toast.success(`Welcome! Logged in as ${u.email}`);
-        
-        // Clear query parameters in client browser URL bar
-        if (typeof window !== "undefined") {
-          window.history.replaceState({}, document.title, window.location.pathname);
-        }
-      }
-    } catch (err: any) {
-      console.error(err);
-      toast.error(err.message || "Failed to complete email sign-in.");
-    } finally {
-      setCompletingSignIn(false);
-      setLoading(false);
-    }
-  }
-
-  async function handleSendLink(e: React.FormEvent) {
+  async function handleAuthSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!emailInput || !emailInput.includes("@")) {
       toast.error("Please enter a valid email address.");
       return;
     }
 
+    if (authMode !== "forgot" && (!passwordInput || passwordInput.length < 6)) {
+      toast.error("Password must be at least 6 characters.");
+      return;
+    }
+
     try {
-      setSendingLink(true);
-      await sendMagicLink(emailInput);
-      setLinkSent(true);
-      toast.success("Magic sign-in link sent! Please check your email inbox.");
+      setSigningIn(true);
+      if (authMode === "login") {
+        const u = await signInWithEmail(emailInput, passwordInput);
+        if (u) {
+          toast.success(`Welcome! Logged in as ${u.email}`);
+          setPasswordInput("");
+        }
+      } else if (authMode === "forgot") {
+        await sendPasswordReset(emailInput);
+        setForgotSent(true);
+        toast.success("Password reset email sent! Check your inbox.");
+      }
     } catch (err: any) {
       console.error(err);
-      toast.error(err.message || "Failed to send magic link.");
+      toast.error(getFriendlyAuthErrorMessage(err));
     } finally {
-      setSendingLink(false);
+      setSigningIn(false);
     }
   }
 
@@ -153,8 +142,10 @@ function ContributorPage() {
     try {
       setLoading(true);
       await signOutUser();
-      setLinkSent(false);
       setEmailInput("");
+      setPasswordInput("");
+      setForgotSent(false);
+      setAuthMode("login");
       toast.success("Signed out successfully");
     } catch (err: any) {
       console.error(err);
@@ -229,63 +220,69 @@ function ContributorPage() {
 
       {/* Auth Panel */}
       <div className="mt-10">
-        {completingSignIn ? (
-          <Card className="p-8 border-border bg-card shadow-sm flex flex-col items-center text-center max-w-md mx-auto">
-            <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
-            <h2 className="text-lg font-bold text-foreground">Completing Sign In</h2>
-            <p className="text-sm text-muted-foreground mt-2">
-              Verifying your secure magic link and establishing contributor session...
-            </p>
-          </Card>
-        ) : loading ? (
-          <div className="flex items-center justify-center p-8 bg-surface rounded-xl border border-border">
+        {loading ? (
+          <div className="flex items-center justify-center p-8 bg-card rounded-xl border border-border shadow-sm">
             <Loader2 className="h-6 w-6 animate-spin text-primary mr-2" />
             <span className="text-sm text-muted-foreground">Checking authentication state...</span>
           </div>
         ) : !user ? (
-          /* Login Card */
-          <Card className="p-8 border-border bg-gradient-to-br from-card to-slate-50 dark:to-slate-900 shadow-md">
-            <div className="flex flex-col items-center text-center max-w-md mx-auto">
+          /* Authentication Card */
+          <Card className="p-8 border-border bg-gradient-to-br from-card to-slate-50 dark:to-slate-900 shadow-md max-w-md mx-auto">
+            <div className="flex flex-col items-center">
               <div className="h-12 w-12 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 mb-4">
                 <Lock className="h-5 w-5" />
               </div>
-              <h2 className="text-xl font-bold text-foreground">Registered Contributor Sign In</h2>
-              <p className="text-sm text-muted-foreground mt-2 mb-6">
-                HistoryTimeline uses passwordless email sign-in. To start publishing your timelines, please contact us to register your email address first.
-              </p>
+              
+              {authMode === "login" && (
+                <>
+                  <h2 className="text-xl font-bold text-foreground">Contributor Sign In</h2>
+                  <p className="text-sm text-muted-foreground mt-2 mb-6 text-center">
+                    Enter your email and password to log into your contributor account.
+                  </p>
+                </>
+              )}
+
+              {authMode === "forgot" && (
+                <>
+                  <h2 className="text-xl font-bold text-foreground">Reset Password</h2>
+                  <p className="text-sm text-muted-foreground mt-2 mb-6 text-center">
+                    Enter your email address to receive a secure password reset link.
+                  </p>
+                </>
+              )}
 
               {!isFirebaseConfigured && (
                 <Alert className="mb-6 border-amber-200 bg-amber-50/50 dark:border-amber-900/30 dark:bg-amber-950/20 text-left">
                   <Info className="h-4 w-4 text-amber-600 dark:text-amber-400" />
                   <AlertTitle className="text-amber-800 dark:text-amber-400 font-semibold">Demo / Simulation Mode Active</AlertTitle>
                   <AlertDescription className="text-amber-700 dark:text-amber-500 text-xs">
-                    Vite Firebase variables are not set. Entering any email below will trigger a simulated login loop that automatically returns with a mock profile.
+                    Vite Firebase variables are not set. Signing in will generate a simulated session with a mock profile.
                   </AlertDescription>
                 </Alert>
               )}
 
-              {linkSent ? (
+              {authMode === "forgot" && forgotSent ? (
                 <div className="w-full bg-blue-50/50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/30 p-6 rounded-lg text-center">
                   <MailCheck className="h-10 w-10 text-blue-600 dark:text-blue-400 mx-auto mb-3" />
-                  <h3 className="font-semibold text-foreground">Sign-In Link Sent!</h3>
+                  <h3 className="font-semibold text-foreground">Reset Email Sent!</h3>
                   <p className="text-xs text-muted-foreground mt-1.5 leading-normal">
-                    We sent a magic link email to <strong>{emailInput}</strong>.
+                    We sent a password reset email to <strong>{emailInput}</strong>.
                   </p>
-                  
-                  <div className="mt-4 flex gap-2 text-xs text-amber-700 dark:text-amber-400 bg-amber-50/60 dark:bg-amber-950/20 p-3 rounded-lg border border-amber-200/50 text-left">
+
+                  <div className="mt-4 flex gap-2 text-xs text-amber-700 dark:text-amber-400 bg-amber-50/60 dark:bg-amber-950/20 p-3 rounded-lg border border-amber-200/50 text-left leading-normal">
                     <Info className="h-4 w-4 shrink-0 mt-0.5" />
-                    <span><strong>IMPORTANT:</strong> Magic link emails often land directly in your <strong>Spam, Junk, or Promotions</strong> folder. Please check those folders if it doesn't arrive in a few seconds!</span>
+                    <span>If you don't see the email within a few minutes, please check your <strong>Spam, Junk, or Promotions</strong> folders as it may have been routed there.</span>
                   </div>
 
-                  <Button variant="outline" size="sm" onClick={() => setLinkSent(false)} className="mt-4 w-full">
-                    Send Link Again
+                  <Button variant="outline" size="sm" onClick={() => { setForgotSent(false); setAuthMode("login"); }} className="mt-4 w-full">
+                    Back to Sign In
                   </Button>
                 </div>
               ) : (
-                <form onSubmit={handleSendLink} className="w-full space-y-4 text-left">
+                <form onSubmit={handleAuthSubmit} className="w-full space-y-4 text-left">
                   <div className="space-y-2">
                     <Label htmlFor="email" className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                      Registered Email Address
+                      Email Address
                     </Label>
                     <Input
                       id="email"
@@ -298,24 +295,64 @@ function ContributorPage() {
                     />
                   </div>
 
-                  <div className="flex gap-2 text-xs text-amber-700 dark:text-amber-400 bg-amber-50/30 dark:bg-amber-950/10 p-2.5 rounded border border-amber-100/30">
-                    <Info className="h-4 w-4 shrink-0 mt-0.5" />
-                    <span><strong>Note:</strong> Sign-in links often land in the <strong>Spam or Promotions</strong> folder.</span>
-                  </div>
+                  {authMode === "login" && (
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <Label htmlFor="password" className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                          Password
+                        </Label>
+                        {authMode === "login" && (
+                          <button
+                            type="button"
+                            onClick={() => setAuthMode("forgot")}
+                            className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                          >
+                            Forgot Password?
+                          </button>
+                        )}
+                      </div>
+                      <Input
+                        id="password"
+                        type="password"
+                        required
+                        placeholder="••••••••"
+                        value={passwordInput}
+                        onChange={(e) => setPasswordInput(e.target.value)}
+                        className="w-full"
+                      />
+                    </div>
+                  )}
 
-                  <Button type="submit" disabled={sendingLink} className="w-full py-5">
-                    {sendingLink ? (
+                  <Button type="submit" disabled={signingIn} className="w-full py-5 mt-2">
+                    {signingIn ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Sending Link...
+                        Processing...
+                      </>
+                    ) : authMode === "login" ? (
+                      <>
+                        <Send className="mr-2 h-4 w-4" />
+                        Sign In
                       </>
                     ) : (
                       <>
                         <Send className="mr-2 h-4 w-4" />
-                        Send Magic Link
+                        Send Reset Link
                       </>
                     )}
                   </Button>
+
+                  {authMode === "forgot" && (
+                    <div className="text-center mt-3">
+                      <button
+                        type="button"
+                        onClick={() => { setAuthMode("login"); setForgotSent(false); }}
+                        className="text-xs text-muted-foreground hover:text-foreground hover:underline"
+                      >
+                        Back to Sign In
+                      </button>
+                    </div>
+                  )}
                 </form>
               )}
             </div>

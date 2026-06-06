@@ -6,7 +6,12 @@ import {
   signInWithEmailLink, 
   User, 
   onAuthStateChanged,
-  signOut as fbSignOut
+  signOut as fbSignOut,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  sendPasswordResetEmail,
+  confirmPasswordReset,
+  verifyPasswordResetCode
 } from "firebase/auth";
 
 // Public Firebase config from environment variables
@@ -178,4 +183,110 @@ export function getCurrentUser(): User | SimulatedUser | null {
     return auth.currentUser;
   }
   return currentSimulatedUser;
+}
+
+export async function signInWithEmail(email: string, password: string): Promise<User | SimulatedUser | null> {
+  if (isFirebaseConfigured && auth) {
+    const result = await signInWithEmailAndPassword(auth, email, password);
+    return result.user;
+  } else {
+    // Simulated sign-in
+    currentSimulatedUser = createMockUser(email);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("chronicle:mock_user", "true");
+      localStorage.setItem("chronicle:mock_user_email", email);
+    }
+    notifyListeners();
+    return currentSimulatedUser;
+  }
+}
+
+export async function signUpWithEmail(email: string, password: string): Promise<User | SimulatedUser | null> {
+  if (isFirebaseConfigured && auth) {
+    const result = await createUserWithEmailAndPassword(auth, email, password);
+    return result.user;
+  } else {
+    // Simulated sign-up
+    currentSimulatedUser = createMockUser(email);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("chronicle:mock_user", "true");
+      localStorage.setItem("chronicle:mock_user_email", email);
+    }
+    notifyListeners();
+    return currentSimulatedUser;
+  }
+}
+
+export async function sendPasswordReset(email: string): Promise<void> {
+  if (isFirebaseConfigured && auth) {
+    const actionCodeSettings = {
+      // Point back to the custom reset password URL on your domain
+      url: window.location.origin + "/reset-password",
+    };
+    await sendPasswordResetEmail(auth, email, actionCodeSettings);
+  } else {
+    console.log(`[Demo Mode] Simulated password reset link sent to: ${email}`);
+  }
+}
+
+export async function verifyResetCode(code: string): Promise<string> {
+  if (isFirebaseConfigured && auth) {
+    return await verifyPasswordResetCode(auth, code);
+  }
+  return "demo@example.com";
+}
+
+export async function confirmResetPassword(code: string, newPassword: string): Promise<void> {
+  if (isFirebaseConfigured && auth) {
+    await confirmPasswordReset(auth, code, newPassword);
+  } else {
+    console.log(`[Demo Mode] Simulated password confirmation success for code: ${code}`);
+  }
+}
+
+export function getFriendlyAuthErrorMessage(error: any): string {
+  if (!error) return "An unexpected error occurred. Please try again.";
+  
+  const code = error.code || (typeof error === "string" ? error : "");
+  
+  switch (code) {
+    // Sign In errors
+    case "auth/invalid-credential":
+      return "Incorrect email or password. Please try again.";
+    case "auth/user-not-found":
+      return "No account found with this email address.";
+    case "auth/wrong-password":
+      return "Incorrect password. Please try again.";
+    case "auth/user-disabled":
+      return "This account has been disabled. Please contact support.";
+    case "auth/too-many-requests":
+      return "Too many unsuccessful attempts. Access to this account has been temporarily disabled. Please try again later.";
+      
+    // Sign Up/Validation errors
+    case "auth/email-already-in-use":
+      return "An account with this email address already exists.";
+    case "auth/invalid-email":
+      return "Please enter a valid email address.";
+    case "auth/weak-password":
+      return "Password is too weak. Please use a stronger password.";
+      
+    // Password reset / code validation errors
+    case "auth/expired-action-code":
+      return "The password reset link has expired. Please request a new one.";
+    case "auth/invalid-action-code":
+      return "The password reset link is invalid. Please request a new one.";
+      
+    default:
+      // Fallback clean message without "Firebase:" prefix if possible
+      const rawMessage = error.message || String(error);
+      if (rawMessage.includes("Firebase:")) {
+        const match = /auth\/[a-zA-Z0-9-]+/.exec(rawMessage);
+        if (match) {
+          const detail = match[0].replace("auth/", "").replace(/-/g, " ");
+          return `Authentication error: ${detail.charAt(0).toUpperCase() + detail.slice(1)}.`;
+        }
+        return rawMessage.replace(/Firebase:\s*Error\s*\([^)]*\)\.?/g, "").trim() || "Authentication failed.";
+      }
+      return rawMessage;
+  }
 }
