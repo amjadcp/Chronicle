@@ -17,8 +17,9 @@ import {
   applyEra,
 } from "@/lib/chronicle/types";
 import { RichEditor } from "./RichEditor";
-import { ImageIcon, Link as LinkIcon, Star, Trash2, Youtube, Plus, ExternalLink } from "lucide-react";
+import { ImageIcon, Link as LinkIcon, Star, Trash2, Youtube, Plus, ExternalLink, Lock } from "lucide-react";
 import { toast } from "sonner";
+import ReactMarkdown from "react-markdown";
 
 // ==========================================
 // 1. NOTES & RESOURCES MODAL (EventModal)
@@ -28,6 +29,8 @@ interface EventModalProps {
   event: TimelineEvent | null;
   onClose: () => void;
   onSave: (patch: Partial<TimelineEvent>) => void;
+  /** When true, all editing controls are hidden — notes are rendered as markdown, resources as links only */
+  readOnly?: boolean;
 }
 
 const ICONS: Record<ResourceType, typeof LinkIcon> = {
@@ -36,7 +39,7 @@ const ICONS: Record<ResourceType, typeof LinkIcon> = {
   youtube: Youtube,
 };
 
-export function EventModal({ open, event, onClose, onSave }: EventModalProps) {
+export function EventModal({ open, event, onClose, onSave, readOnly = false }: EventModalProps) {
   const [notes, setNotes] = useState("");
   const [resources, setResources] = useState<Resource[]>([]);
   const [iconResourceId, setIconResourceId] = useState<string | null>(null);
@@ -112,7 +115,14 @@ export function EventModal({ open, event, onClose, onSave }: EventModalProps) {
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="truncate">Notes & Resources: {event.name || "Event"}</DialogTitle>
+          <DialogTitle className="truncate flex items-center gap-2">
+            Notes & Resources: {event.name || "Event"}
+            {readOnly && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
+                <Lock className="h-2.5 w-2.5" /> Read-only
+              </span>
+            )}
+          </DialogTitle>
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full mt-2">
@@ -130,15 +140,30 @@ export function EventModal({ open, event, onClose, onSave }: EventModalProps) {
               Resources ({resources.length})
             </TabsTrigger>
           </TabsList>
+
+          {/* Notes tab */}
           <TabsContent value="notes" className="mt-4 focus-visible:outline-none">
-            <RichEditor valueMarkdown={notes} onChangeMarkdown={handleNotesChange} />
-          </TabsContent>
-          <TabsContent value="resources" className="mt-4 focus-visible:outline-none space-y-4">
-            {/* Resources list as Notion-style cards */}
-            <div className="space-y-2.5">
-              {resources.length === 0 && !showAddForm && (
+            {readOnly ? (
+              notes.trim() ? (
+                <div className="prose prose-sm dark:prose-invert max-w-none rounded-md border border-border/60 bg-muted/20 px-4 py-3">
+                  <ReactMarkdown>{notes}</ReactMarkdown>
+                </div>
+              ) : (
                 <p className="rounded-md border border-dashed border-border bg-surface p-4 text-center text-sm text-muted-foreground">
-                  No resources yet. Click "Add Link" to attach a website, image, or YouTube link.
+                  No notes for this event.
+                </p>
+              )
+            ) : (
+              <RichEditor valueMarkdown={notes} onChangeMarkdown={handleNotesChange} />
+            )}
+          </TabsContent>
+
+          {/* Resources tab */}
+          <TabsContent value="resources" className="mt-4 focus-visible:outline-none space-y-4">
+            <div className="space-y-2.5">
+              {resources.length === 0 && (
+                <p className="rounded-md border border-dashed border-border bg-surface p-4 text-center text-sm text-muted-foreground">
+                  {readOnly ? "No resources attached to this event." : 'No resources yet. Click "Add Link" to attach a website, image, or YouTube link.'}
                 </p>
               )}
               {resources.map((r) => {
@@ -152,7 +177,6 @@ export function EventModal({ open, event, onClose, onSave }: EventModalProps) {
                       rel="noopener noreferrer"
                       className="flex flex-1 items-center gap-3 min-w-0 mr-4"
                     >
-                      {/* Circle Icon */}
                       <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
                         r.type === "youtube"
                           ? "bg-red-100 text-red-600 dark:bg-red-950/30 dark:text-red-400"
@@ -162,109 +186,117 @@ export function EventModal({ open, event, onClose, onSave }: EventModalProps) {
                       }`}>
                         <Icon className="h-5 w-5" />
                       </div>
-
-                      {/* Text details */}
                       <div className="min-w-0 flex-1">
                         <div className="text-sm font-semibold text-foreground truncate hover:underline">
                           {r.label || r.url}
                         </div>
-                        <div className="text-xs text-muted-foreground truncate">
-                          {r.url}
-                        </div>
+                        <div className="text-xs text-muted-foreground truncate">{r.url}</div>
                       </div>
                     </a>
 
-                    {/* Actions */}
-                    <div className="flex items-center gap-1">
-                      <Button
-                        type="button"
-                        size="icon"
-                        variant={isIcon ? "default" : "outline"}
-                        className="h-8 w-8"
-                        title={isIcon ? "Selected as icon" : "Mark as icon"}
-                        onClick={() => handleToggleIcon(r.id)}
-                      >
-                        <Star className={`h-4 w-4 ${isIcon ? "fill-current" : ""}`} />
-                      </Button>
-                      <Button
-                        type="button"
-                        size="icon"
-                        variant="outline"
-                        className="h-8 w-8 border-destructive/20 hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
-                        title="Remove resource"
-                        onClick={() => removeResource(r.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
+                    {/* Edit actions — hidden in read-only mode */}
+                    {!readOnly && (
+                      <div className="flex items-center gap-1">
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant={isIcon ? "default" : "outline"}
+                          className="h-8 w-8"
+                          title={isIcon ? "Selected as icon" : "Mark as icon"}
+                          onClick={() => handleToggleIcon(r.id)}
+                        >
+                          <Star className={`h-4 w-4 ${isIcon ? "fill-current" : ""}`} />
+                        </Button>
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="outline"
+                          className="h-8 w-8 border-destructive/20 hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
+                          title="Remove resource"
+                          onClick={() => removeResource(r.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 );
               })}
             </div>
 
-            {/* Add link form */}
-            {showAddForm ? (
-              <div className="space-y-3 rounded-lg border border-border bg-surface/40 p-3 animate-in fade-in slide-in-from-top-2 duration-200">
-                <div className="text-xs font-semibold text-foreground">Add new resource link</div>
-                <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-                  <div className="space-y-1">
-                    <Label htmlFor="res-type" className="text-[11px] text-muted-foreground">Type</Label>
-                    <Select value={newType} onValueChange={(v) => setNewType(v as ResourceType)}>
-                      <SelectTrigger id="res-type" className="h-8 text-xs bg-background">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="website">Link</SelectItem>
-                        <SelectItem value="image">Image</SelectItem>
-                        <SelectItem value="youtube">YouTube</SelectItem>
-                      </SelectContent>
-                    </Select>
+            {/* Add link form — hidden in read-only mode */}
+            {!readOnly && (
+              showAddForm ? (
+                <div className="space-y-3 rounded-lg border border-border bg-surface/40 p-3 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="text-xs font-semibold text-foreground">Add new resource link</div>
+                  <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+                    <div className="space-y-1">
+                      <Label htmlFor="res-type" className="text-[11px] text-muted-foreground">Type</Label>
+                      <Select value={newType} onValueChange={(v) => setNewType(v as ResourceType)}>
+                        <SelectTrigger id="res-type" className="h-8 text-xs bg-background">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="website">Link</SelectItem>
+                          <SelectItem value="image">Image</SelectItem>
+                          <SelectItem value="youtube">YouTube</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1">
+                      <Label htmlFor="res-label" className="text-[11px] text-muted-foreground">Title (Optional)</Label>
+                      <Input
+                        id="res-label"
+                        placeholder="e.g. Wikipedia page"
+                        className="h-8 text-xs bg-background"
+                        value={newLabel}
+                        onChange={(e) => setNewLabel(e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-1 sm:col-span-2">
+                      <Label htmlFor="res-url" className="text-[11px] text-muted-foreground">URL *</Label>
+                      <Input
+                        id="res-url"
+                        placeholder="e.g. https://wikipedia.org/..."
+                        className="h-8 text-xs bg-background"
+                        value={newUrl}
+                        onChange={(e) => setNewUrl(e.target.value)}
+                      />
+                    </div>
                   </div>
-                  <div className="space-y-1">
-                    <Label htmlFor="res-label" className="text-[11px] text-muted-foreground">Title (Optional)</Label>
-                    <Input
-                      id="res-label"
-                      placeholder="e.g. Wikipedia page"
-                      className="h-8 text-xs bg-background"
-                      value={newLabel}
-                      onChange={(e) => setNewLabel(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-1 sm:col-span-2">
-                    <Label htmlFor="res-url" className="text-[11px] text-muted-foreground">URL *</Label>
-                    <Input
-                      id="res-url"
-                      placeholder="e.g. https://wikipedia.org/..."
-                      className="h-8 text-xs bg-background"
-                      value={newUrl}
-                      onChange={(e) => setNewUrl(e.target.value)}
-                    />
+                  <div className="flex justify-end gap-2 mt-2">
+                    <Button type="button" variant="outline" size="sm" className="h-8 text-xs" onClick={() => setShowAddForm(false)}>
+                      Cancel
+                    </Button>
+                    <Button type="button" size="sm" className="h-8 text-xs" onClick={handleAddResource} disabled={!newUrl.trim()}>
+                      Add Link
+                    </Button>
                   </div>
                 </div>
-                <div className="flex justify-end gap-2 mt-2">
-                  <Button type="button" variant="outline" size="sm" className="h-8 text-xs" onClick={() => setShowAddForm(false)}>
-                    Cancel
-                  </Button>
-                  <Button type="button" size="sm" className="h-8 text-xs" onClick={handleAddResource} disabled={!newUrl.trim()}>
-                    Add Link
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <Button type="button" variant="outline" size="sm" className="w-full border-dashed" onClick={() => setShowAddForm(true)}>
-                <Plus className="mr-1.5 h-4 w-4" /> Add Link / Resource
-              </Button>
+              ) : (
+                <Button type="button" variant="outline" size="sm" className="w-full border-dashed" onClick={() => setShowAddForm(true)}>
+                  <Plus className="mr-1.5 h-4 w-4" /> Add Link / Resource
+                </Button>
+              )
             )}
           </TabsContent>
         </Tabs>
 
-        {activeTab === "notes" && (
+        {/* Save button — hidden in read-only mode */}
+        {!readOnly && activeTab === "notes" && (
           <DialogFooter className="mt-6">
             <Button variant="outline" onClick={onClose}>Cancel</Button>
             <Button onClick={() => {
               onSave({ notesMarkdown: notes });
               onClose();
             }}>Save Changes</Button>
+          </DialogFooter>
+        )}
+
+        {/* Read-only close button */}
+        {readOnly && (
+          <DialogFooter className="mt-6">
+            <Button variant="outline" onClick={onClose}>Close</Button>
           </DialogFooter>
         )}
       </DialogContent>

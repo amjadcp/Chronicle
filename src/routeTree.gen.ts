@@ -14,6 +14,7 @@ import { Route as ContributorRouteImport } from './routes/contributor'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TimelineIdRouteImport } from './routes/timeline.$id'
+import { Route as PrebuiltFileRouteImport } from './routes/prebuilt.$file'
 
 const TimelinesRoute = TimelinesRouteImport.update({
   id: '/timelines',
@@ -40,12 +41,18 @@ const TimelineIdRoute = TimelineIdRouteImport.update({
   path: '/timeline/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PrebuiltFileRoute = PrebuiltFileRouteImport.update({
+  id: '/prebuilt/$file',
+  path: '/prebuilt/$file',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/contributor': typeof ContributorRoute
   '/timelines': typeof TimelinesRoute
+  '/prebuilt/$file': typeof PrebuiltFileRoute
   '/timeline/$id': typeof TimelineIdRoute
 }
 export interface FileRoutesByTo {
@@ -53,6 +60,7 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/contributor': typeof ContributorRoute
   '/timelines': typeof TimelinesRoute
+  '/prebuilt/$file': typeof PrebuiltFileRoute
   '/timeline/$id': typeof TimelineIdRoute
 }
 export interface FileRoutesById {
@@ -61,19 +69,33 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/contributor': typeof ContributorRoute
   '/timelines': typeof TimelinesRoute
+  '/prebuilt/$file': typeof PrebuiltFileRoute
   '/timeline/$id': typeof TimelineIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/about' | '/contributor' | '/timelines' | '/timeline/$id'
+  fullPaths:
+    | '/'
+    | '/about'
+    | '/contributor'
+    | '/timelines'
+    | '/prebuilt/$file'
+    | '/timeline/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about' | '/contributor' | '/timelines' | '/timeline/$id'
+  to:
+    | '/'
+    | '/about'
+    | '/contributor'
+    | '/timelines'
+    | '/prebuilt/$file'
+    | '/timeline/$id'
   id:
     | '__root__'
     | '/'
     | '/about'
     | '/contributor'
     | '/timelines'
+    | '/prebuilt/$file'
     | '/timeline/$id'
   fileRoutesById: FileRoutesById
 }
@@ -82,6 +104,7 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   ContributorRoute: typeof ContributorRoute
   TimelinesRoute: typeof TimelinesRoute
+  PrebuiltFileRoute: typeof PrebuiltFileRoute
   TimelineIdRoute: typeof TimelineIdRoute
 }
 
@@ -122,6 +145,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TimelineIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/prebuilt/$file': {
+      id: '/prebuilt/$file'
+      path: '/prebuilt/$file'
+      fullPath: '/prebuilt/$file'
+      preLoaderRoute: typeof PrebuiltFileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -130,6 +160,7 @@ const rootRouteChildren: RootRouteChildren = {
   AboutRoute: AboutRoute,
   ContributorRoute: ContributorRoute,
   TimelinesRoute: TimelinesRoute,
+  PrebuiltFileRoute: PrebuiltFileRoute,
   TimelineIdRoute: TimelineIdRoute,
 }
 export const routeTree = rootRouteImport

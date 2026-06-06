@@ -2,8 +2,8 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { storage, subscribeTimelines } from "@/lib/chronicle/storage";
-import { fetchPrebuiltIndex, fetchPrebuiltTimeline, PREBUILT_BASE } from "@/lib/chronicle/prebuilt";
-import { Timeline } from "@/lib/chronicle/types";
+import { fetchPrebuiltIndex, PREBUILT_BASE } from "@/lib/chronicle/prebuilt";
+
 import { exportTimelineHtml } from "@/lib/chronicle/exportHtml";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -117,18 +117,7 @@ function TimelinesPage() {
     reader.readAsText(file);
   }
 
-  async function openPrebuilt(file: string) {
-    const t = await fetchPrebuiltTimeline(file);
-    if (!t) {
-      toast.error("Could not load that timeline.");
-      return;
-    }
-    // Duplicate into local storage so user can explore/edit
-    const local = storage.create(t.name);
-    const merged: Timeline = { ...t, id: local.id };
-    storage.save(merged);
-    navigate({ to: "/timeline/$id", params: { id: merged.id } });
-  }
+
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
@@ -295,9 +284,11 @@ function TimelinesPage() {
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-1">
-                    <Button size="sm" onClick={() => openPrebuilt(p.file)}>
-                      <ExternalLink className="mr-2 h-3.5 w-3.5" />
-                      Open
+                    <Button asChild size="sm">
+                      <Link to="/prebuilt/$file" params={{ file: p.file }}>
+                        <ExternalLink className="mr-2 h-3.5 w-3.5" />
+                        Open
+                      </Link>
                     </Button>
                   </div>
                 </Card>
