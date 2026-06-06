@@ -152,7 +152,9 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const location = useLocation();
-  const showFooter = !location.pathname.startsWith("/timeline/");
+  const showFooter =
+    !location.pathname.startsWith("/timeline/") &&
+    !location.pathname.startsWith("/prebuilt/");
 
   return (
     <QueryClientProvider client={queryClient}>

@@ -2,9 +2,10 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { fetchPrebuiltTimeline } from "@/lib/chronicle/prebuilt";
 import { storage } from "@/lib/chronicle/storage";
-import { Timeline, TimelineEvent, SortKey } from "@/lib/chronicle/types";
+import { Timeline, TimelineEvent, SortKey, durationYears, formatEventDate } from "@/lib/chronicle/types";
 import { sortEvents } from "@/lib/chronicle/sort";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -33,6 +34,8 @@ import {
   Users,
   Calendar,
   Lock,
+  Info,
+  FileText,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -63,6 +66,7 @@ function PrebuiltDetail() {
   const [viewMode, setViewMode] = useState<"graph" | "table">("graph");
   const [openEventId, setOpenEventId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [infoDialogOpen, setInfoDialogOpen] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -116,32 +120,24 @@ function PrebuiltDetail() {
   if (!timeline) return null;
 
   return (
-    <div className="w-full px-6 py-6">
-      {/* Header */}
+    <div className="mx-auto max-w-[1400px] w-full px-6 py-6">
+      {/* Header Area with back button containing Timeline Name and Info button */}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2 min-w-0">
-          <Button
-            asChild
-            variant="ghost"
-            size="sm"
-            className="text-muted-foreground hover:bg-transparent -ml-2 shrink-0"
-          >
+          <Button asChild variant="ghost" size="sm" className="text-muted-foreground font-semibold text-lg hover:bg-transparent -ml-2">
             <Link to="/timelines">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back
+              <ArrowLeft className="mr-2 h-5 w-5" /> {timeline.name}
             </Link>
           </Button>
-
-          <div className="min-w-0">
-            <h1 className="text-lg font-bold text-foreground truncate leading-tight">
-              {timeline.name}
-            </h1>
-            {timeline.description && (
-              <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
-                {timeline.description}
-              </p>
-            )}
-          </div>
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={() => setInfoDialogOpen(true)}
+            title="Timeline Info"
+            className="shrink-0"
+          >
+            <Info className="h-4.5 w-4.5 text-muted-foreground" />
+          </Button>
         </div>
 
         {/* Meta badges + Save button */}
@@ -295,7 +291,37 @@ function PrebuiltDetail() {
         readOnly
       />
 
-      {/* "Save to My Timelines" info dialog (shown when clicking Save) */}
+      {/* Timeline Info Dialog */}
+      <Dialog open={infoDialogOpen} onOpenChange={setInfoDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Timeline Settings</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="tl-name">Name</Label>
+              <Input
+                id="tl-name"
+                value={timeline.name}
+                readOnly
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="tl-desc">Description</Label>
+              <textarea
+                id="tl-desc"
+                className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                value={timeline.description || ""}
+                placeholder="No description"
+                readOnly
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setInfoDialogOpen(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -312,80 +338,67 @@ function ReadOnlyEventTable({
   groups: { id: string; name: string; color: string }[];
   onOpenNotes: (eid: string) => void;
 }) {
-  const groupMap = Object.fromEntries(groups.map((g) => [g.id, g]));
-
   if (events.length === 0) {
     return (
       <div className="rounded-lg border border-dashed border-border py-10 text-center text-sm text-muted-foreground">
-        No events in this timeline.
+        No events found.
       </div>
     );
   }
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-border">
+    <div className="overflow-x-auto rounded-lg border border-border bg-card">
       <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b border-border bg-muted/40">
-            <th className="py-2.5 px-3 text-left font-semibold text-muted-foreground">Event</th>
-            <th className="py-2.5 px-3 text-left font-semibold text-muted-foreground">Group</th>
-            <th className="py-2.5 px-3 text-left font-semibold text-muted-foreground">Start</th>
-            <th className="py-2.5 px-3 text-left font-semibold text-muted-foreground">End</th>
-            <th className="py-2.5 px-3 text-center font-semibold text-muted-foreground">Notes</th>
+        <thead className="bg-surface text-xs uppercase text-muted-foreground">
+          <tr>
+            <th className="px-3 py-2 text-left font-medium">Event</th>
+            <th className="px-3 py-2 text-left font-medium">Start</th>
+            <th className="px-3 py-2 text-left font-medium">End</th>
+            <th className="px-3 py-2 text-left font-medium">Duration</th>
+            <th className="px-3 py-2 text-left font-medium">Group</th>
+            <th className="w-32 px-3 py-2 text-right font-medium">Actions</th>
           </tr>
         </thead>
         <tbody>
-          {events.map((e, idx) => {
-            const group = e.groupId ? groupMap[e.groupId] : null;
-            const hasNotes = !!e.notesMarkdown?.trim() || e.resources.length > 0;
+          {events.map((e) => {
+            const dur = durationYears(e.start, e.end);
+            const group = groups.find((g) => g.id === e.groupId);
             return (
-              <tr
-                key={e.id}
-                className={`border-b border-border/60 last:border-0 ${
-                  idx % 2 === 0 ? "bg-background" : "bg-muted/20"
-                } hover:bg-muted/40 transition-colors`}
-              >
-                <td className="py-2 px-3 font-medium text-foreground">{e.name}</td>
-                <td className="py-2 px-3">
+              <tr key={e.id} className="border-t border-border align-middle hover:bg-surface/20 transition-colors">
+                <td className="min-w-[12rem] px-3 py-3 font-medium text-foreground">
+                  {e.name}
+                </td>
+                <td className="px-3 py-3 text-foreground whitespace-nowrap">
+                  {formatEventDate(e.start)}
+                </td>
+                <td className="px-3 py-3 text-foreground whitespace-nowrap">
+                  {formatEventDate(e.end)}
+                </td>
+                <td className="px-3 py-3 text-muted-foreground whitespace-nowrap">
+                  {dur.toFixed(dur < 10 ? 1 : 0)} yr
+                </td>
+                <td className="px-3 py-3">
                   {group ? (
-                    <span
-                      className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium"
-                      style={{
-                        background: group.color + "22",
-                        border: `1px solid ${group.color}55`,
-                        color: group.color,
-                      }}
-                    >
-                      <span
-                        className="h-1.5 w-1.5 rounded-full"
-                        style={{ background: group.color }}
-                      />
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-2.5 py-0.5 text-xs text-foreground">
+                      <span className="h-2 w-2 rounded-full" style={{ background: group.color }} />
                       {group.name}
                     </span>
                   ) : (
-                    <span className="text-muted-foreground/50">—</span>
+                    <span className="text-xs text-muted-foreground">—</span>
                   )}
                 </td>
-                <td className="py-2 px-3 text-muted-foreground">
-                  {formatDate(e.start)}
-                </td>
-                <td className="py-2 px-3 text-muted-foreground">
-                  {formatDate(e.end)}
-                </td>
-                <td className="py-2 px-3 text-center">
-                  {hasNotes ? (
-                    <button
-                      type="button"
+                <td className="px-3 py-3">
+                  <div className="flex items-center justify-end gap-1">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      aria-label="Open notes & resources"
                       onClick={() => onOpenNotes(e.id)}
-                      className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-primary hover:bg-primary/10 transition-colors"
-                      title="View notes & resources"
+                      title="Notes & Resources"
                     >
-                      <BookOpen className="h-3.5 w-3.5" />
-                      View
-                    </button>
-                  ) : (
-                    <span className="text-muted-foreground/40 text-xs">—</span>
-                  )}
+                      <FileText className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </td>
               </tr>
             );
@@ -394,13 +407,4 @@ function ReadOnlyEventTable({
       </table>
     </div>
   );
-}
-
-function formatDate(d: { year: number; month?: number; day?: number }): string {
-  const y = Math.abs(d.year);
-  const era = d.year < 0 ? " BC" : " AD";
-  const parts: string[] = [String(y)];
-  if (d.month) parts.push(String(d.month).padStart(2, "0"));
-  if (d.day) parts.push(String(d.day).padStart(2, "0"));
-  return parts.join("-") + era;
 }

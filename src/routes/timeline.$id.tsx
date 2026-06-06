@@ -180,7 +180,7 @@ function TimelineDetail() {
   };
 
   return (
-    <div className="w-full px-6 py-6">
+    <div className="mx-auto max-w-[1400px] w-full px-6 py-6">
       {/* Header Area with back button containing Timeline Name and Info button */}
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <Button asChild variant="ghost" size="sm" className="text-muted-foreground font-semibold text-lg hover:bg-transparent -ml-2">
