@@ -49,14 +49,14 @@ import { User } from "firebase/auth";
 export const Route = createFileRoute("/contributor")({
   head: () => ({
     meta: [
-      { title: "Contribute to Chronicle — Submit Historical Timelines" },
+      { title: "Contribute to HistoryTimeline — Submit Historical Timelines" },
       {
         name: "description",
         content:
-          "Become a Chronicle contributor and submit historical timelines to the public community library.",
+          "Become a HistoryTimeline contributor and submit historical timelines to the public community library.",
       },
-      { property: "og:title", content: "Contribute to Chronicle" },
-      { property: "og:description", content: "Submit historical timelines to the Chronicle community library." },
+      { property: "og:title", content: "Contribute to HistoryTimeline" },
+      { property: "og:description", content: "Submit historical timelines to the HistoryTimeline community library." },
       { property: "og:url", content: "/contributor" },
     ],
     links: [{ rel: "canonical", href: "/contributor" }],
@@ -221,7 +221,7 @@ function ContributorPage() {
           Contribute Historical Timelines
         </h1>
         <p className="mt-4 text-base leading-relaxed text-muted-foreground max-w-2xl">
-          Chronicle hosts a shared library of historical timelines. 
+          HistoryTimeline hosts a shared library of historical timelines. 
           Once your email is approved and registered, you can publish your custom timelines directly to the shared library 
           for everyone to view and study.
         </p>
@@ -251,7 +251,7 @@ function ContributorPage() {
               </div>
               <h2 className="text-xl font-bold text-foreground">Registered Contributor Sign In</h2>
               <p className="text-sm text-muted-foreground mt-2 mb-6">
-                Chronicle uses passwordless email sign-in. To start publishing your timelines, please contact us to register your email address first.
+                HistoryTimeline uses passwordless email sign-in. To start publishing your timelines, please contact us to register your email address first.
               </p>
 
               {!isFirebaseConfigured && (

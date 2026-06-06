@@ -39,12 +39,12 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/prebuilt/$file")({
   head: () => ({
     meta: [
-      { title: "Community Timeline — Chronicle" },
+      { title: "Community Timeline — HistoryTimeline" },
       {
         name: "description",
-        content: "View a community-contributed historical timeline from the Chronicle public library.",
+        content: "View a community-contributed historical timeline from the HistoryTimeline public library.",
       },
-      { property: "og:title", content: "Community Timeline — Chronicle" },
+      { property: "og:title", content: "Community Timeline — HistoryTimeline" },
       { property: "og:description", content: "Explore a community historical timeline." },
       { name: "robots", content: "noindex" },
     ],

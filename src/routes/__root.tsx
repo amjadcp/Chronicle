@@ -79,23 +79,23 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { name: "theme-color", content: "#2563EB" },
-      { title: "Chronicle — Interactive Historical Timeline Builder" },
+      { title: "HistoryTimeline — Interactive Historical Timeline Builder" },
       {
         name: "description",
         content:
-          "Chronicle is a modern interactive historical timeline builder. Create, organize, and visualize historical events across centuries with a clean, fast, offline-capable timeline editor.",
+          "HistoryTimeline is a modern interactive historical timeline builder. Create, organize, and visualize historical events across centuries with a clean, fast, offline-capable timeline editor.",
       },
-      { name: "author", content: "Chronicle" },
-      { property: "og:site_name", content: "Chronicle" },
+      { name: "author", content: "HistoryTimeline" },
+      { property: "og:site_name", content: "HistoryTimeline" },
       { property: "og:type", content: "website" },
-      { property: "og:title", content: "Chronicle — Interactive Historical Timeline Builder" },
+      { property: "og:title", content: "HistoryTimeline — Interactive Historical Timeline Builder" },
       {
         property: "og:description",
         content:
           "Create, organize, and visualize historical events through interactive timelines.",
       },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:title", content: "Chronicle — Interactive Historical Timeline Builder" },
+      { name: "twitter:title", content: "HistoryTimeline — Interactive Historical Timeline Builder" },
       {
         name: "twitter:description",
         content: "Create, organize, and visualize historical events through interactive timelines.",
@@ -119,7 +119,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         children: JSON.stringify({
           "@context": "https://schema.org",
           "@type": "SoftwareApplication",
-          name: "Chronicle",
+          name: "HistoryTimeline",
           applicationCategory: "EducationalApplication",
           operatingSystem: "Web",
           description:

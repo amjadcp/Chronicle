@@ -34,13 +34,13 @@ import {
 export const Route = createFileRoute("/timelines")({
   head: () => ({
     meta: [
-      { title: "Timelines — Chronicle" },
+      { title: "Timelines — HistoryTimeline" },
       {
         name: "description",
         content:
           "Browse prebuilt historical timelines from the community library or create your own interactive timeline.",
       },
-      { property: "og:title", content: "Timelines — Chronicle" },
+      { property: "og:title", content: "Timelines — HistoryTimeline" },
       { property: "og:description", content: "Browse community timelines or create your own." },
       { property: "og:url", content: "/timelines" },
     ],

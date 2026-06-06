@@ -15,13 +15,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Chronicle — Interactive Historical Timeline Builder" },
+      { title: "HistoryTimeline — Interactive Historical Timeline Builder" },
       {
         name: "description",
         content:
           "Build interactive historical timelines. Create, organize, and visualize historical events across centuries with a clean, fast, offline-capable timeline editor.",
       },
-      { property: "og:title", content: "Chronicle — Interactive Historical Timeline Builder" },
+      { property: "og:title", content: "HistoryTimeline — Interactive Historical Timeline Builder" },
       {
         property: "og:description",
         content:
@@ -97,7 +97,7 @@ function Home() {
           </h2>
           <div className="mt-4 space-y-4 text-base leading-relaxed text-muted-foreground">
             <p>
-              Chronicle is an interactive timeline creator designed for historians, educators,
+              HistoryTimeline is an interactive timeline creator designed for historians, educators,
               students, researchers, writers, and lifelong learners.
             </p>
             <p>
@@ -108,7 +108,7 @@ function Home() {
             <p>
               Whether you are studying ancient civilizations, world history, political movements,
               scientific discoveries, cultural evolution, military campaigns, or historical
-              biographies, Chronicle helps transform historical information into visual knowledge.
+              biographies, HistoryTimeline helps transform historical information into visual knowledge.
             </p>
           </div>
         </div>
@@ -118,7 +118,7 @@ function Home() {
       <section className="border-b border-border bg-surface">
         <div className="mx-auto max-w-6xl px-4 py-16">
           <h2 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-            What Makes Chronicle Different
+            What Makes HistoryTimeline Different
           </h2>
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {FEATURES.map((f) => (
@@ -162,7 +162,7 @@ function Home() {
             Contribute Historical Timelines
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-base text-muted-foreground">
-            Chronicle maintains a growing collection of community-contributed timelines. If you
+            HistoryTimeline maintains a growing collection of community-contributed timelines. If you
             are interested in contributing, connect with us to request contributor access.
           </p>
           <div className="mt-6">

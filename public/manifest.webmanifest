@@ -1,6 +1,6 @@
 {
-  "name": "Chronicle — Interactive Historical Timeline Builder",
-  "short_name": "Chronicle",
+  "name": "HistoryTimeline — Interactive Historical Timeline Builder",
+  "short_name": "HistoryTimeline",
   "description": "Create, organize, and visualize historical events through interactive timelines.",
   "start_url": "/",
   "scope": "/",

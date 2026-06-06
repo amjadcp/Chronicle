@@ -16,7 +16,7 @@ export function SiteHeader() {
           >
             <Clock className="h-4 w-4" />
           </span>
-          Chronicle
+          HistoryTimeline
         </Link>
         <nav aria-label="Primary" className="flex items-center gap-1">
           <Link to="/timelines" className={linkBase} activeProps={{ className: `${linkBase} ${active}` }}>

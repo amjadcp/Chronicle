@@ -5,7 +5,7 @@ export function SiteFooter() {
     <footer className="border-t border-border bg-surface">
       <div className="mx-auto grid max-w-6xl gap-8 px-4 py-10 sm:grid-cols-2 md:grid-cols-4">
         <div>
-          <div className="text-sm font-semibold text-foreground">Chronicle</div>
+          <div className="text-sm font-semibold text-foreground">HistoryTimeline</div>
           <p className="mt-2 text-sm text-muted-foreground">
             A modern interactive historical timeline builder.
           </p>
@@ -39,7 +39,7 @@ export function SiteFooter() {
         </div>
       </div>
       <div className="border-t border-border py-4 text-center text-xs text-muted-foreground">
-        © {new Date().getFullYear()} Chronicle
+        © {new Date().getFullYear()} HistoryTimeline
       </div>
     </footer>
   );

@@ -38,13 +38,13 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/timeline/$id")({
   head: ({ params }) => ({
     meta: [
-      { title: "Timeline — Chronicle" },
+      { title: "Timeline — HistoryTimeline" },
       {
         name: "description",
-        content: "Edit an interactive historical timeline in Chronicle.",
+        content: "Edit an interactive historical timeline in HistoryTimeline.",
       },
-      { property: "og:title", content: "Timeline — Chronicle" },
-      { property: "og:description", content: "Edit a historical timeline in Chronicle." },
+      { property: "og:title", content: "Timeline — HistoryTimeline" },
+      { property: "og:description", content: "Edit a historical timeline in HistoryTimeline." },
       { property: "og:url", content: `/timeline/${params.id}` },
       { name: "robots", content: "noindex" },
     ],
