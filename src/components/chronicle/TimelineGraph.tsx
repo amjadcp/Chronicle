@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, useEffect, type WheelEvent } from "react";
+import { useMemo, useRef, useState, useEffect } from "react";
 import { Info } from "lucide-react";
 import { Group, TimelineEvent, toDecimalYear, formatEventDate } from "@/lib/chronicle/types";
 
@@ -136,6 +136,7 @@ function computeSmartInitialView(items: LaidOut[]): { min: number; max: number }
 
 export function TimelineGraph({ events, groups, singleRowPerGroup, onEventClick }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(800);
 
   useEffect(() => {
@@ -185,7 +186,7 @@ export function TimelineGraph({ events, groups, singleRowPerGroup, onEventClick 
   const LANE_GAP = 4;
   const AXIS_H = 28;
   const PADDING_X = 16;
-  const SVG_H = Math.max(500, AXIS_H + laneCount * (LANE_H + LANE_GAP) + 32);
+  const SVG_H_BODY = Math.max(400, laneCount * (LANE_H + LANE_GAP) + 16);
   const innerW = Math.max(200, width - PADDING_X * 2);
 
   const yearToX = (y: number) => {
@@ -193,38 +194,107 @@ export function TimelineGraph({ events, groups, singleRowPerGroup, onEventClick 
     return PADDING_X + ((y - view.min) / span) * innerW;
   };
 
-  function onWheel(e: WheelEvent<SVGSVGElement>) {
-    e.preventDefault();
-    const rect = (e.currentTarget as SVGSVGElement).getBoundingClientRect();
-    const px = e.clientX - rect.left;
-    const span = view.max - view.min;
-    const yearAtCursor = view.min + ((px - PADDING_X) / innerW) * span;
-    const zoom = e.deltaY > 0 ? 1.2 : 0.8333;
-    const newSpan = Math.max(0.5, Math.min(span * zoom, (maxYear - minYear) * 20));
-    const ratio = (yearAtCursor - view.min) / span;
-    const newMin = yearAtCursor - ratio * newSpan;
-    const newMax = newMin + newSpan;
-    setView({ min: newMin, max: newMax });
-  }
+  // Keep refs for wheel event listener to avoid re-binding on view change
+  const viewRef = useRef(view);
+  viewRef.current = view;
+  const minYearRef = useRef(minYear);
+  minYearRef.current = minYear;
+  const maxYearRef = useRef(maxYear);
+  maxYearRef.current = maxYear;
+  const innerWRef = useRef(innerW);
+  innerWRef.current = innerW;
+
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+
+    const handleWheel = (e: globalThis.WheelEvent) => {
+      e.preventDefault();
+      const rect = el.getBoundingClientRect();
+      const px = e.clientX - rect.left;
+      
+      const currentView = viewRef.current;
+      const currentMinYear = minYearRef.current;
+      const currentMaxYear = maxYearRef.current;
+      const currentInnerW = innerWRef.current;
+
+      const span = currentView.max - currentView.min;
+
+      // Handle horizontal swipe/scroll panning
+      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+        const panAmount = (e.deltaX / currentInnerW) * span;
+        setView({ min: currentView.min + panAmount, max: currentView.max + panAmount });
+        return;
+      }
+
+      // Handle vertical zoom (if deltaY is non-zero)
+      if (e.deltaY !== 0) {
+        const yearAtCursor = currentView.min + ((px - PADDING_X) / currentInnerW) * span;
+        const zoom = e.deltaY > 0 ? 1.2 : 0.8333;
+        const newSpan = Math.max(0.5, Math.min(span * zoom, (currentMaxYear - currentMinYear) * 20));
+        const ratio = (yearAtCursor - currentView.min) / span;
+        const newMin = yearAtCursor - ratio * newSpan;
+        const newMax = newMin + newSpan;
+        setView({ min: newMin, max: newMax });
+      }
+    };
+
+    el.addEventListener("wheel", handleWheel, { passive: false });
+    return () => {
+      el.removeEventListener("wheel", handleWheel);
+    };
+  }, []);
 
   // drag to pan
-  const panRef = useRef<{ startX: number; startView: { min: number; max: number } } | null>(null);
+  const panRef = useRef<{
+    startX: number;
+    lastY: number;
+    startView: { min: number; max: number };
+    startScrollTop: number;
+  } | null>(null);
   const [hoveredItem, setHoveredItem] = useState<LaidOut | null>(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-  function onPointerDown(e: React.PointerEvent<SVGSVGElement>) {
+
+  function onPointerDown(e: React.PointerEvent<HTMLDivElement>) {
     if ((e.target as Element).closest("[data-event-bar]")) return;
-    (e.currentTarget as SVGSVGElement).setPointerCapture(e.pointerId);
-    panRef.current = { startX: e.clientX, startView: { ...view } };
+    (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
+    panRef.current = {
+      startX: e.clientX,
+      lastY: e.clientY,
+      startView: { ...view },
+      startScrollTop: scrollRef.current ? scrollRef.current.scrollTop : 0,
+    };
   }
-  function onPointerMove(e: React.PointerEvent<SVGSVGElement>) {
+
+  function onPointerMove(e: React.PointerEvent<HTMLDivElement>) {
     if (!panRef.current) return;
+
+    // Horizontal panning (update view)
     const dx = e.clientX - panRef.current.startX;
     const span = panRef.current.startView.max - panRef.current.startView.min;
     const dy = (dx / innerW) * span;
-    setView({ min: panRef.current.startView.min - dy, max: panRef.current.startView.max - dy });
+    setView({
+      min: panRef.current.startView.min - dy,
+      max: panRef.current.startView.max - dy,
+    });
+
+    // Vertical panning (scroll the container, and if not possible, scroll the window)
+    const dyY = e.clientY - panRef.current.lastY;
+    panRef.current.lastY = e.clientY;
+
+    if (scrollRef.current) {
+      const prevScrollTop = scrollRef.current.scrollTop;
+      scrollRef.current.scrollTop -= dyY;
+      const scrolledAmount = prevScrollTop - scrollRef.current.scrollTop;
+      const remainingDy = dyY - scrolledAmount;
+      if (Math.abs(remainingDy) > 0.1) {
+        window.scrollBy(0, -remainingDy);
+      }
+    }
   }
-  function onPointerUp(e: React.PointerEvent<SVGSVGElement>) {
-    (e.currentTarget as SVGSVGElement).releasePointerCapture(e.pointerId);
+
+  function onPointerUp(e: React.PointerEvent<HTMLDivElement>) {
+    (e.currentTarget as HTMLDivElement).releasePointerCapture(e.pointerId);
     panRef.current = null;
   }
 
@@ -324,41 +394,17 @@ export function TimelineGraph({ events, groups, singleRowPerGroup, onEventClick 
         </div>
       ) : (
         <>
-          <svg
-            role="img"
-            aria-label="Timeline graph"
-            width={width}
-            height={SVG_H}
-            onWheel={onWheel}
-            onPointerDown={onPointerDown}
-            onPointerMove={onPointerMove}
-            onPointerUp={onPointerUp}
-            onPointerCancel={onPointerUp}
-            style={{ touchAction: "none", cursor: panRef.current ? "grabbing" : "grab" }}
-          >
-            {/* group background lanes */}
-            {Array.from(groupLanes.entries()).map(([gid, range]) => {
-              const color = groupColorMap.get(gid) ?? "#94a3b8";
-              const y = AXIS_H + range.start * (LANE_H + LANE_GAP) - 2;
-              const h = (range.end - range.start + 1) * (LANE_H + LANE_GAP);
-              return (
-                <rect key={gid} x={0} y={y} width={width} height={h} fill={color} opacity={0.08} />
-              );
-            })}
-
-            {/* axis */}
-            <line x1={0} x2={width} y1={AXIS_H} y2={AXIS_H} stroke="var(--color-border)" />
-            {ticks.map((t) => (
-              <g key={t}>
-                <line
-                  x1={yearToX(t)}
-                  x2={yearToX(t)}
-                  y1={AXIS_H}
-                  y2={SVG_H}
-                  stroke="var(--color-border)"
-                  opacity={0.5}
-                />
+          {/* Sticky top ruler */}
+          <div className="border-b border-border bg-card sticky top-0 z-10">
+            <svg
+              width={width}
+              height={AXIS_H}
+              className="block"
+            >
+              <line x1={0} x2={width} y1={AXIS_H} y2={AXIS_H} stroke="var(--color-border)" />
+              {ticks.map((t) => (
                 <text
+                  key={t}
                   x={yearToX(t)}
                   y={AXIS_H - 8}
                   textAnchor="middle"
@@ -367,86 +413,128 @@ export function TimelineGraph({ events, groups, singleRowPerGroup, onEventClick 
                 >
                   {formatYearLabel(t)}
                 </text>
-              </g>
-            ))}
+              ))}
+            </svg>
+          </div>
 
-            {/* bars */}
-            {visible.map((it) => {
-              const x1 = yearToX(it.startYear);
-              const x2 = yearToX(it.endYear);
-              const w = Math.max(4, x2 - x1);
-              const y = AXIS_H + it.lane * (LANE_H + LANE_GAP) + 2;
-              const groupColor = it.groupId ? (groupColorMap.get(it.groupId) ?? "#2563EB") : "#2563EB";
-              const color = it.event.color ?? groupColor;
-              const hasIcon = !!it.event.iconResourceId;
-              return (
-                <g
-                  key={it.event.id}
-                  data-event-bar="1"
-                  onClick={() => onEventClick(it.event.id)}
-                  onMouseEnter={(e) => {
-                    if (!panRef.current) {
-                      setHoveredItem(it);
-                      const rect = wrapRef.current?.getBoundingClientRect();
-                      if (rect) setMousePos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
-                    }
-                  }}
-                  onMouseMove={(e) => {
-                    if (!panRef.current && hoveredItem?.event.id === it.event.id) {
-                      const rect = wrapRef.current?.getBoundingClientRect();
-                      if (rect) setMousePos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
-                    }
-                  }}
-                  onMouseLeave={() => setHoveredItem(null)}
-                  style={{ cursor: "pointer" }}
-                >
-                  <rect
-                    x={x1}
-                    y={y}
-                    width={w}
-                    height={LANE_H - 4}
-                    rx={6}
-                    ry={6}
-                    fill={color}
-                    fillOpacity={0.9}
-                    stroke={color}
-                  />
-                  <foreignObject
-                    x={x1 + 6}
-                    y={y + 3}
-                    width={Math.max(0, w - 12)}
-                    height={LANE_H - 10}
+          {/* Scrollable container with vertical grid lines and event bars */}
+          <div
+            ref={scrollRef}
+            className="overflow-y-auto overflow-x-hidden max-h-[500px]"
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerUp}
+            onPointerCancel={onPointerUp}
+            style={{ touchAction: "none", cursor: panRef.current ? "grabbing" : "grab" }}
+          >
+            <svg
+              role="img"
+              aria-label="Timeline graph"
+              width={width}
+              height={SVG_H_BODY}
+              className="block"
+            >
+              {/* group background lanes */}
+              {Array.from(groupLanes.entries()).map(([gid, range]) => {
+                const color = groupColorMap.get(gid) ?? "#94a3b8";
+                const y = range.start * (LANE_H + LANE_GAP);
+                const h = (range.end - range.start + 1) * (LANE_H + LANE_GAP);
+                return (
+                  <rect key={gid} x={0} y={y} width={width} height={h} fill={color} opacity={0.08} />
+                );
+              })}
+
+              {/* vertical grid lines */}
+              {ticks.map((t) => (
+                <line
+                  key={t}
+                  x1={yearToX(t)}
+                  x2={yearToX(t)}
+                  y1={0}
+                  y2={SVG_H_BODY}
+                  stroke="var(--color-border)"
+                  opacity={0.5}
+                />
+              ))}
+
+              {/* bars */}
+              {visible.map((it) => {
+                const x1 = yearToX(it.startYear);
+                const x2 = yearToX(it.endYear);
+                const w = Math.max(4, x2 - x1);
+                const y = it.lane * (LANE_H + LANE_GAP) + 4;
+                const groupColor = it.groupId ? (groupColorMap.get(it.groupId) ?? "#2563EB") : "#2563EB";
+                const color = it.event.color ?? groupColor;
+                const hasIcon = !!it.event.iconResourceId;
+                return (
+                  <g
+                    key={it.event.id}
+                    data-event-bar="1"
+                    onClick={() => onEventClick(it.event.id)}
+                    onMouseEnter={(e) => {
+                      if (!panRef.current) {
+                        setHoveredItem(it);
+                        const rect = wrapRef.current?.getBoundingClientRect();
+                        if (rect) setMousePos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+                      }
+                    }}
+                    onMouseMove={(e) => {
+                      if (!panRef.current && hoveredItem?.event.id === it.event.id) {
+                        const rect = wrapRef.current?.getBoundingClientRect();
+                        if (rect) setMousePos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+                      }
+                    }}
+                    onMouseLeave={() => setHoveredItem(null)}
+                    style={{ cursor: "pointer" }}
                   >
-                    <div
-                      style={{
-                        fontSize: 12,
-                        lineHeight: 1.4,
-                        color: "white",
-                        whiteSpace: "nowrap",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 4,
-                        height: "100%",
-                      }}
+                    <rect
+                      x={x1}
+                      y={y}
+                      width={w}
+                      height={LANE_H - 4}
+                      rx={6}
+                      ry={6}
+                      fill={color}
+                      fillOpacity={0.9}
+                      stroke={color}
+                    />
+                    <foreignObject
+                      x={x1 + 6}
+                      y={y + 3}
+                      width={Math.max(0, w - 12)}
+                      height={LANE_H - 10}
                     >
-                      {hasIcon && (
-                        <span aria-hidden style={{ opacity: 0.9 }}>
-                          ★
-                        </span>
-                      )}
-                      <span>{it.event.name || "(untitled)"}</span>
-                    </div>
-                  </foreignObject>
-                  <title>
-                    {it.event.name}: {formatEventDate(it.event.start)} –{" "}
-                    {formatEventDate(it.event.end)}
-                  </title>
-                </g>
-              );
-            })}
-          </svg>
+                      <div
+                        style={{
+                          fontSize: 12,
+                          lineHeight: 1.4,
+                          color: "white",
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 4,
+                          height: "100%",
+                        }}
+                      >
+                        {hasIcon && (
+                          <span aria-hidden style={{ opacity: 0.9 }}>
+                            ★
+                          </span>
+                        )}
+                        <span>{it.event.name || "(untitled)"}</span>
+                      </div>
+                    </foreignObject>
+                    <title>
+                      {it.event.name}: {formatEventDate(it.event.start)} –{" "}
+                      {formatEventDate(it.event.end)}
+                    </title>
+                  </g>
+                );
+              })}
+            </svg>
+          </div>
 
           {/* Hover info card */}
           {hoveredItem && (() => {
