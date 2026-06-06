@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { trackEvent } from "@/lib/analytics";
 import {
   Linkedin,
   Mail,
@@ -126,6 +127,7 @@ function ContributorPage() {
         const u = await signInWithEmail(emailInput, passwordInput);
         if (u) {
           toast.success(`Welcome! Logged in as ${u.email}`);
+          trackEvent("contributor_login", { email: u.email });
           setPasswordInput("");
         }
       } else if (authMode === "forgot") {
@@ -145,6 +147,7 @@ function ContributorPage() {
     try {
       setLoading(true);
       await signOutUser();
+      trackEvent("contributor_logout");
       setEmailInput("");
       setPasswordInput("");
       setForgotSent(false);
@@ -192,6 +195,12 @@ function ContributorPage() {
         });
         setSuccessModalOpen(true);
         toast.success(`"${timeline.name}" submitted successfully!`);
+        trackEvent("contributor_submit_timeline", {
+          timeline_id: timeline.id,
+          timeline_name: timeline.name,
+          contributor: res.contributor,
+          simulated: res.simulated,
+        });
       } else {
         toast.error("Submission failed. Please try again.");
       }

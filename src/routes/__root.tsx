@@ -15,6 +15,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { SiteHeader } from "../components/site/SiteHeader";
 import { SiteFooter } from "../components/site/SiteFooter";
 import { Toaster } from "../components/ui/sonner";
+import { initGA, trackPageView } from "../lib/analytics";
 
 function NotFoundComponent() {
   return (
@@ -162,6 +163,11 @@ function RootComponent() {
   const location = useLocation();
   const showFooter =
     !location.pathname.startsWith("/timeline/") && !location.pathname.startsWith("/prebuilt/");
+
+  useEffect(() => {
+    initGA();
+    trackPageView(location.pathname);
+  }, [location.pathname]);
 
   return (
     <QueryClientProvider client={queryClient}>

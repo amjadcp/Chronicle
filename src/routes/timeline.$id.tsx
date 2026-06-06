@@ -48,6 +48,7 @@ import {
   FileUp,
 } from "lucide-react";
 import { toast } from "sonner";
+import { trackEvent } from "@/lib/analytics";
 
 export const Route = createFileRoute("/timeline/$id")({
   head: ({ params }) => ({
@@ -93,6 +94,10 @@ function TimelineDetail() {
   // View States
   const [viewMode, setViewMode] = useState<"graph" | "table">("graph");
 
+  useEffect(() => {
+    trackEvent("view_mode_change", { timeline_id: id, mode: viewMode });
+  }, [viewMode, id]);
+
   // Name Inline Edit States
   const [isEditingName, setIsEditingName] = useState(false);
   const [tempName, setTempName] = useState("");
@@ -103,6 +108,7 @@ function TimelineDetail() {
       return;
     }
     persist({ ...timeline, name: tempName.trim() });
+    trackEvent("timeline_rename", { timeline_id: id, new_name: tempName.trim() });
     setIsEditingName(false);
     toast.success("Timeline renamed successfully");
   };
@@ -157,16 +163,27 @@ function TimelineDetail() {
     });
   };
 
-  const updateEvent = (eid: string, patch: Partial<TimelineEvent>) =>
+  const updateEvent = (eid: string, patch: Partial<TimelineEvent>) => {
+    trackEvent("event_edit", {
+      timeline_id: id,
+      event_id: eid,
+      updated_fields: Object.keys(patch),
+    });
     persist({
       ...timeline,
       events: timeline.events.map((e) => (e.id === eid ? { ...e, ...patch } : e)),
     });
+  };
 
-  const addEvent = (e: TimelineEvent) => persist({ ...timeline, events: [...timeline.events, e] });
+  const addEvent = (e: TimelineEvent) => {
+    trackEvent("event_create", { timeline_id: id, event_id: e.id, event_name: e.name });
+    persist({ ...timeline, events: [...timeline.events, e] });
+  };
 
-  const deleteEvent = (eid: string) =>
+  const deleteEvent = (eid: string) => {
+    trackEvent("event_delete", { timeline_id: id, event_id: eid });
     persist({ ...timeline, events: timeline.events.filter((e) => e.id !== eid) });
+  };
 
   const doGroup = () => {
     if (!groupName.trim() || selected.size === 0) return;
@@ -180,6 +197,11 @@ function TimelineDetail() {
       groups: [...timeline.groups, group],
       events: timeline.events.map((e) => (selected.has(e.id) ? { ...e, groupId: group.id } : e)),
     });
+    trackEvent("event_group", {
+      timeline_id: id,
+      group_name: groupName.trim(),
+      grouped_events_count: selected.size,
+    });
     setSelected(new Set());
     setGroupName("");
     setGroupDialogOpen(false);
@@ -191,6 +213,10 @@ function TimelineDetail() {
     persist({
       ...timeline,
       events: timeline.events.map((e) => (selected.has(e.id) ? { ...e, groupId: null } : e)),
+    });
+    trackEvent("event_ungroup", {
+      timeline_id: id,
+      ungrouped_events_count: selected.size,
     });
     setSelected(new Set());
   };
@@ -297,6 +323,13 @@ function TimelineDetail() {
       ...timeline,
       groups: nextGroups,
       events: [...timeline.events, ...importedEvents],
+    });
+
+    trackEvent("events_import", {
+      timeline_id: id,
+      source_timeline_id: sourceTimelineId,
+      imported_events_count: importedEvents.length,
+      imported_groups: importGroups,
     });
 
     setImportDialogOpen(false);

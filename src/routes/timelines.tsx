@@ -22,6 +22,7 @@ import {
   Info,
 } from "lucide-react";
 import { toast } from "sonner";
+import { trackEvent } from "@/lib/analytics";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -76,6 +77,7 @@ function TimelinesPage() {
 
   function handleCreate() {
     const t = storage.create("Untitled Timeline");
+    trackEvent("timeline_create", { timeline_id: t.id, timeline_name: t.name });
     navigate({ to: "/timeline/$id", params: { id: t.id } });
   }
 
@@ -107,6 +109,11 @@ function TimelinesPage() {
       URL.revokeObjectURL(htmlUrl);
 
       toast.success(`Exported JSON & HTML for "${t.name}"`);
+      trackEvent("timeline_export", {
+        timeline_id: t.id,
+        timeline_name: t.name,
+        event_count: t.events.length,
+      });
     } catch (err) {
       console.error(err);
       toast.error("Failed to export HTML file");
@@ -119,6 +126,11 @@ function TimelinesPage() {
       try {
         const t = storage.importJSON(String(reader.result));
         toast.success(`Imported "${t.name}"`);
+        trackEvent("timeline_import", {
+          timeline_id: t.id,
+          timeline_name: t.name,
+          event_count: t.events.length,
+        });
       } catch (e: unknown) {
         toast.error(e instanceof Error ? e.message : "Invalid file");
       }
@@ -223,6 +235,10 @@ function TimelinesPage() {
                       variant="outline"
                       onClick={() => {
                         storage.duplicate(t.id);
+                        trackEvent("timeline_duplicate", {
+                          timeline_id: t.id,
+                          timeline_name: t.name,
+                        });
                         toast.success("Duplicated");
                       }}
                       aria-label={`Duplicate ${t.name}`}
@@ -256,6 +272,10 @@ function TimelinesPage() {
                           <AlertDialogAction
                             onClick={() => {
                               storage.remove(t.id);
+                              trackEvent("timeline_delete", {
+                                timeline_id: t.id,
+                                timeline_name: t.name,
+                              });
                               toast.success("Deleted");
                             }}
                           >
@@ -318,7 +338,16 @@ function TimelinesPage() {
                   </div>
                   <div className="flex flex-wrap gap-1">
                     <Button asChild size="sm">
-                      <Link to="/prebuilt/$file" params={{ file: p.file }}>
+                      <Link
+                        to="/prebuilt/$file"
+                        params={{ file: p.file }}
+                        onClick={() => {
+                          trackEvent("prebuilt_open", {
+                            file_name: p.file,
+                            timeline_name: p.name,
+                          });
+                        }}
+                      >
                         <ExternalLink className="mr-2 h-3.5 w-3.5" />
                         Open
                       </Link>
