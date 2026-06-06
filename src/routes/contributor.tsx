@@ -496,17 +496,17 @@ function ContributorPage() {
           <h2 className="text-lg font-bold text-foreground">How to become a contributor</h2>
           <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
             If you want to contribute timelines to the public library, let's get in touch first. 
-            Send us your email address, and we will register it in our database so you can sign in using your magic link.
+            Send us your email address, and we will register it in our database so you can sign in using email and password.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Button asChild variant="outline" size="sm">
-              <a href="https://www.linkedin.com/" target="_blank" rel="noreferrer">
+              <a href="https://www.linkedin.com/in/amjadcp/" target="_blank" rel="noreferrer">
                 <Linkedin className="mr-2 h-4 w-4" />
                 Contact via LinkedIn
               </a>
             </Button>
             <Button asChild variant="outline" size="sm">
-              <a href="mailto:hello@chronicle.app">
+              <a href="mailto:amjadcp03@gmail.com">
                 <Mail className="mr-2 h-4 w-4" />
                 Contact via Email
               </a>

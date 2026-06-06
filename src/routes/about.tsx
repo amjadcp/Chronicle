@@ -25,8 +25,7 @@ function AboutPage() {
       <p className="mt-4 text-base leading-relaxed text-muted-foreground">
         HistoryTimeline is an interactive historical timeline builder designed for history learners,
         researchers, educators, writers, and content creators. It runs entirely in your browser,
-        stores your timelines locally, and connects to a public library of community-contributed
-        timelines.
+        stores your timelines locally, and connects to a public library of pre-built timelines.
       </p>
 
       <h2 className="mt-10 text-xl font-semibold text-foreground">What you can do</h2>

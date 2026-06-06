@@ -1,16 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import {
-  ArrowRight,
-  Calendar,
-  Database,
-  Download,
-  FileText,
-  Layers,
-  Sparkles,
-  Users,
-} from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -34,28 +24,6 @@ export const Route = createFileRoute("/")({
   component: Home,
 });
 
-const FEATURES = [
-  { icon: Calendar, title: "Interactive Historical Timelines", body: "Create timelines spanning thousands of years with support for BC and AD dates." },
-  { icon: Layers, title: "Timeline Grouping", body: "Organize events into dynasties, kingdoms, empires, movements, eras, or custom categories." },
-  { icon: FileText, title: "Historical Research Workspace", body: "Attach notes, references, images, videos, and external sources to every event." },
-  { icon: Database, title: "Offline-First Timeline Builder", body: "Create and manage timelines without requiring an account." },
-  { icon: Download, title: "Interactive Timeline Export", body: "Export complete timeline data as portable JSON files." },
-  { icon: Users, title: "Open Community Timeline Library", body: "Browse community-created historical timelines from researchers and history enthusiasts." },
-];
-
-const USE_CASES = [
-  "World History Timelines",
-  "Ancient Civilization Timelines",
-  "Political History Timelines",
-  "Scientific Discovery Timelines",
-  "Historical Biography Timelines",
-  "Cultural History Timelines",
-  "War and Conflict Timelines",
-  "Historical Research Projects",
-  "Educational Timeline Creation",
-  "Historical Event Visualization",
-];
-
 function Home() {
   return (
     <div>
@@ -63,18 +31,13 @@ function Home() {
       <section className="border-b border-border bg-surface">
         <div className="mx-auto max-w-6xl px-4 py-20 md:py-28">
           <div className="max-w-3xl">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1 text-xs text-muted-foreground">
-              <Sparkles className="h-3.5 w-3.5 text-primary" />
-              Modern timeline builder for historians and educators
-            </div>
             <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl md:text-6xl">
-              Build Interactive Historical Timelines
+              History Timeline Creator for Students & Educators
             </h1>
             <p className="mt-5 max-w-2xl text-lg text-muted-foreground">
-              Create, organize, and visualize historical events through interactive timelines.
-              Explore centuries of history, compare events across eras, and build timelines that
-              make complex historical narratives easier to understand.
+              A simple, intuitive timeline builder to visualize historical events. Ideal for class projects, or self-study.
             </p>
+              {/* A simple, intuitive timeline builder to visualize historical events. Ideal for class projects, self-study, or creating history content for social media and portfolios. */}
             <div className="mt-8 flex flex-wrap gap-3">
               <Button asChild size="lg">
                 <Link to="/timelines?tab=prebuilt">
@@ -93,65 +56,19 @@ function Home() {
       <section className="border-b border-border">
         <div className="mx-auto max-w-4xl px-4 py-16">
           <h2 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-            A Modern Historical Timeline Builder
+            About HistoryTimeline
           </h2>
           <div className="mt-4 space-y-4 text-base leading-relaxed text-muted-foreground">
             <p>
-              HistoryTimeline is an interactive timeline creator designed for historians, educators,
-              students, researchers, writers, and lifelong learners.
+              HistoryTimeline is an educational timeline tool designed specifically for learners and educators of history. Whether you are studying for a history class, preparing a presentation, or exploring your own historical interests, this tool helps you organize events chronologically with ease.
             </p>
             <p>
-              Create detailed timelines with historical events, visualize timelines across
-              centuries, organize events into meaningful groups, attach research notes and
-              resources, and export timelines as portable interactive files.
+              You can create timelines covering any historical period, group events by eras, and export your work to share with others. It's a completely free history timeline maker that runs directly in your browser without requiring an account.
             </p>
             <p>
-              Whether you are studying ancient civilizations, world history, political movements,
-              scientific discoveries, cultural evolution, military campaigns, or historical
-              biographies, HistoryTimeline helps transform historical information into visual knowledge.
+              Use this tool to map out ancient civilizations, track major world events, or create study guides. Dive into history, visualize the timeline of events, and enhance your historical learning journey today.
             </p>
           </div>
-        </div>
-      </section>
-
-      {/* Features */}
-      <section className="border-b border-border bg-surface">
-        <div className="mx-auto max-w-6xl px-4 py-16">
-          <h2 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-            What Makes HistoryTimeline Different
-          </h2>
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {FEATURES.map((f) => (
-              <Card key={f.title} className="border-border">
-                <CardHeader className="pb-3">
-                  <div className="mb-2 inline-flex h-9 w-9 items-center justify-center rounded-md bg-primary/10 text-primary">
-                    <f.icon className="h-5 w-5" />
-                  </div>
-                  <CardTitle className="text-base">{f.title}</CardTitle>
-                </CardHeader>
-                <CardContent className="text-sm text-muted-foreground">{f.body}</CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Use cases */}
-      <section className="border-b border-border">
-        <div className="mx-auto max-w-6xl px-4 py-16">
-          <h2 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-            Use Cases
-          </h2>
-          <ul className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {USE_CASES.map((u) => (
-              <li
-                key={u}
-                className="rounded-lg border border-border bg-card px-4 py-3 text-sm text-foreground"
-              >
-                {u}
-              </li>
-            ))}
-          </ul>
         </div>
       </section>
 
@@ -159,11 +76,10 @@ function Home() {
       <section className="bg-surface">
         <div className="mx-auto max-w-4xl px-4 py-16 text-center">
           <h2 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-            Contribute Historical Timelines
+            Learn Together
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-base text-muted-foreground">
-            HistoryTimeline maintains a growing collection of community-contributed timelines. If you
-            are interested in contributing, connect with us to request contributor access.
+            Explore a growing collection of prebuilt timelines created by fellow history learners and educators. If you would like to share your timelines with the community, you can apply to become a contributor.
           </p>
           <div className="mt-6">
             <Button asChild>

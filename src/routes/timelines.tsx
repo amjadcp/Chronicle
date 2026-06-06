@@ -134,7 +134,7 @@ function TimelinesPage() {
         <div>
           <h1 className="text-3xl font-semibold tracking-tight text-foreground">Timelines</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Browse community timelines or build your own.
+            Browse prebuilt timelines or build your own.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
